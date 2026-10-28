@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 虚拟盖章 11 盖法</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{--blue:#2563eb;--amber:#f59e0b;--ink:#111827;--muted:#6b7280;--bg:#f3f4f6;--line:#e5e7eb}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;font-family:"Noto Sans SC",sans-serif;background:#0f172a;color:var(--ink);display:flex;flex-direction:column;align-items:center;padding:28px 12px 48px;gap:14px}
+    .bar{width:min(400px,100%);display:flex;justify-content:space-between;color:#94a3b8;font-size:.85rem}
+    .bar a{color:#93c5fd;text-decoration:none}
+    .phone{width:390px;max-width:100%;height:844px;border-radius:36px;background:#111;padding:10px;box-shadow:0 28px 70px rgba(0,0,0,.45)}
+    .screen{height:100%;border-radius:28px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
+    .nav{background:#fff;border-bottom:1px solid var(--line);padding:44px 14px 12px;display:flex;align-items:center;gap:8px}
+    .nav button{border:0;background:#f3f4f6;width:32px;height:32px;border-radius:10px;cursor:pointer}
+    .nav h1{flex:1;font-size:17px;font-weight:700}
+    .body{flex:1;overflow:auto;padding:12px 12px 20px}
+    .card{background:#fff;border-radius:14px;padding:12px;margin-bottom:10px}
+    .h{font-size:14px;font-weight:700;margin-bottom:8px}
+    .methods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .m{border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;font-size:12px}
+    .m.on{border-color:var(--blue);background:#eff6ff}
+    .m .n{font-weight:600;font-size:13px}
+    .m .v{color:var(--muted);margin-top:4px}
+    .preview{display:flex;gap:12px;align-items:center}
+    .stamp-box{width:72px;height:72px;border:3px solid var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);position:relative}
+    .stamp-box.round{border-radius:50%;border-color:var(--amber);color:#b45309}
+    .stamp-box.combo{border-color:#10b981;color:#047857}
+    .eq{font-family:Outfit,sans-serif;font-size:1.4rem;font-weight:700;color:var(--blue)}
+    .hist{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:13px}
+    .btn{width:100%;border:0;border-radius:12px;background:var(--blue);color:#fff;height:48px;font:inherit;font-weight:600;cursor:pointer}
+    .seg{display:flex;gap:6px;margin-bottom:8px}
+    .seg button{flex:1;border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px;font:inherit;font-size:12px;cursor:pointer}
+    .seg button.on{border-color:var(--blue);background:#eff6ff;color:var(--blue);font-weight:600}
+    .toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;z-index:9}
+    .toast.on{opacity:1}
+    .hint{color:#64748b;font-size:.78rem;text-align:center;max-width:390px}
+  </style>
+</head>
+<body>
+  <div class="bar"><a href="parent-01-register-child.html">← 上一项</a><span>02 / 05</span><a href="parent-03-report-records.html">下一项 →</a></div>
+  <div class="phone"><div class="screen">
+    <div class="nav">
+      <button onclick="location.href='parent-index.html'">‹</button>
+      <h1>虚拟盖章</h1>
+      <span style="font-size:12px;color:var(--blue)" onclick="toast('设计稿·切换实体采集')">实体章</span>
+    </div>
+    <div class="body">
+      <div class="card">
+        <div class="h">当前孩子 · 测试同学</div>
+        <div class="seg">
+          <button class="on" onclick="tab(this,'know')">知章</button>
+          <button onclick="tab(this,'do')">行章</button>
+          <button onclick="tab(this,'combo')">知行对章</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="h">选择盖法（11 种）</div>
+        <div class="methods" id="methods"></div>
+      </div>
+      <div class="card">
+        <div class="h">当量预览</div>
+        <div class="preview">
+          <div class="stamp-box" id="box">知</div>
+          <div>
+            <div id="mname" style="font-weight:600">正向章（知章）</div>
+            <div class="eq" id="meq">+10 ZZE</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px" id="mdesc">ZE=1 · 积极行为确认</div>
+          </div>
+        </div>
+        <button class="btn" style="margin-top:12px" onclick="toast('设计稿·已提交虚拟盖章')">确认盖章</button>
+      </div>
+      <div class="card">
+        <div class="h">近 7 日虚拟盖章</div>
+        <div class="hist"><span>10-27 · 正向章 · 语文</span><span style="color:var(--blue)">+10</span></div>
+        <div class="hist"><span>10-26 · 改进章 · 德育</span><span style="color:var(--blue)">+20</span></div>
+        <div class="hist"><span>10-25 · 行章 · 体育</span><span style="color:var(--blue)">+100</span></div>
+        <div class="hist"><span>10-24 · 引导章 · 习惯</span><span style="color:var(--muted)">不计分</span></div>
+        <div class="hist"><span>10-23 · 知行对章</span><span style="color:var(--blue)">+500</span></div>
+      </div>
+    </div>
+  </div></div>
+  <p class="hint">对应文档 4.3.2 / 4.5.2 盖法表 · 落地 stamp.vue + sealMethods</p>
+  <div class="toast" id="toast"></div>
+  <script>
+    const ALL=[
+      {id:1,g:'know',n:'正向章',v:'ZE=1 → +10 ZZE',eq:'+10 ZZE',d:'积极行为确认'},
+      {id:2,g:'know',n:'引导章',v:'Y=1 · 不计分',eq:'+0 ZZE',d:'需关注，不扣分'},
+      {id:3,g:'know',n:'改进章',v:'G=1 → +20 ZZE',eq:'+20 ZZE',d:'引导后改善，双倍'},
+      {id:4,g:'know',n:'知章二叠',v:'ZE=2 → +20 ZZE',eq:'+20 ZZE',d:'表现突出'},
+      {id:5,g:'know',n:'知章三叠',v:'ZE=3 → +30 ZZE',eq:'+30 ZZE',d:'表现卓越'},
+      {id:6,g:'do',n:'行章',v:'XE=1 → +100 ZZE',eq:'+100 ZZE',d:'10 知进 1 行'},
+      {id:7,g:'do',n:'行章二叠',v:'XE=2 → +200 ZZE',eq:'+200 ZZE',d:'班级荣誉/21天'},
+      {id:8,g:'do',n:'行章三叠',v:'XE=3 → +300 ZZE',eq:'+300 ZZE',d:'年级荣誉/90天'},
+      {id:9,g:'combo',n:'知行对章',v:'DE=1 → +500 ZZE',eq:'+500 ZZE',d:'完整成长周期'},
+      {id:10,g:'combo',n:'对章二叠',v:'DE=2 → +1000 ZZE',eq:'+1000 ZZE',d:'校级荣誉'},
+      {id:11,g:'combo',n:'对章三叠',v:'DE=3 → +1500 ZZE',eq:'+1500 ZZE',d:'区县级荣誉'},
+    ]
+    let g='know', sel=1
+    function render(){
+      const box=document.getElementById('methods')
+      box.innerHTML=ALL.filter(x=>x.g===g).map(x=>`
+        <div class="m ${x.id===sel?'on':''}" onclick="pick(${x.id})">
+          <div class="n">${x.n}</div><div class="v">${x.v}</div>
+        </div>`).join('')
+      const m=ALL.find(x=>x.id===sel)||ALL[0]
+      document.getElementById('mname').textContent=m.n
+      document.getElementById('meq').textContent=m.eq
+      document.getElementById('mdesc').textContent=m.d
+      const b=document.getElementById('box')
+      b.className='stamp-box'+(g==='do'?' round':g==='combo'?' combo':'')
+      b.textContent=g==='do'?'行':g==='combo'?'对':'知'
+    }
+    function pick(id){sel=id;render()}
+    function tab(btn,gg){
+      document.querySelectorAll('.seg button').forEach(b=>b.classList.remove('on'))
+      btn.classList.add('on');g=gg
+      sel=ALL.find(x=>x.g===gg).id;render()
+    }
+    function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(window.__t);window.__t=setTimeout(()=>t.classList.remove('on'),1600)}
+    render()
+  </script>
+</body>
+</html>

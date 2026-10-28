@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>印章识别</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a2744;
+      --paper: #f7f3ea;
+      --paper-deep: #ebe4d4;
+      --blue: #1e4a9c;
+      --yellow: #d4a017;
+      --line: #c8bfa8;
+      --accent: #b5451b;
+      --ok: #2d6a4f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "DM Sans", "Noto Serif SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 10% 0%, #fff8e8 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 90% 20%, #e8eef8 0%, transparent 50%),
+        var(--paper);
+      min-height: 100vh;
+    }
+    header {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    header h1 {
+      font-family: "Noto Serif SC", serif;
+      font-size: clamp(1.5rem, 3.5vw, 2rem);
+      margin: 0 0 0.35rem;
+    }
+    header p { margin: 0; opacity: 0.8; max-width: 36rem; line-height: 1.5; }
+    a.link {
+      color: var(--blue);
+      text-decoration: none;
+      border-bottom: 1px solid color-mix(in srgb, var(--blue) 40%, transparent);
+      font-size: 0.9rem;
+    }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+      display: grid;
+      gap: 1.25rem;
+    }
+    .upload-zone {
+      border: 1.5px dashed var(--line);
+      background: #fffdf8;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-zone:hover, .upload-zone.drag {
+      border-color: var(--blue);
+      background: #f3f7ff;
+    }
+    .upload-zone strong {
+      font-family: "Noto Serif SC", serif;
+      font-size: 1.1rem;
+    }
+    .upload-zone span { font-size: 0.88rem; opacity: 0.7; }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    button, .btn {
+      font: inherit;
+      padding: 0.55rem 1.1rem;
+      border: none;
+      background: var(--ink);
+      color: #fff;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+    }
+    button.secondary, .btn.secondary {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+    }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    input[type="file"] { display: none; }
+    .status {
+      font-size: 0.9rem;
+      min-height: 1.4em;
+    }
+    .status.err { color: var(--accent); }
+    .status.ok { color: var(--ok); }
+    .layout {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .panel {
+      border-top: 1px solid var(--line);
+      padding-top: 1rem;
+    }
+    .panel h2 {
+      font-family: "Noto Serif SC", serif;
+      font-size: 1.05rem;
+      margin: 0 0 0.75rem;
+    }
+    .preview {
+      background: #fff;
+      border: 1px solid var(--line);
+      min-height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+    }
+    .preview img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .preview .placeholder { opacity: 0.45; font-size: 0.9rem; padding: 2rem; text-align: center; }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 0.9rem;
+    }
+    @media (max-width: 600px) {
+      .summary { grid-template-columns: 1fr 1fr; }
+    }
+    .stat {
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 0.55rem 0.65rem;
+    }
+    .stat b { display: block; font-size: 1.2rem; color: var(--blue); }
+    .stat span { font-size: 0.75rem; opacity: 0.65; }
+    .list {
+      display: grid;
+      gap: 0.55rem;
+      max-height: 520px;
+      overflow: auto;
+    }
+    .card {
+      background: linear-gradient(160deg, #fff 0%, var(--paper-deep) 100%);
+      border: 1px solid var(--line);
+      padding: 0.7rem 0.8rem;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+    .card .title {
+      font-family: "Noto Serif SC", serif;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .card .meta { opacity: 0.75; font-size: 0.82rem; }
+    .digits {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.3rem;
+      margin-top: 0.45rem;
+    }
+    .digits div {
+      border: 1px dashed var(--line);
+      padding: 0.25rem 0.4rem;
+      font-size: 0.8rem;
+    }
+    .digits strong { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>印章识别</h1>
+      <p>上传成长记录册盖章页，默认经 DeepSeek 视觉识别知章 / 行章、盖法与方章四角数字。</p>
+    </div>
+    <a class="link" href="/demo">盖法设计演示 →</a>
+  </header>
+
+  <main>
+    <section class="upload-zone" id="dropZone">
+      <strong>拖拽图片到这里，或点击选择</strong>
+      <span>支持 PNG / JPG / WEBP · 建议清晰扫描件</span>
+      <div class="actions" style="align-items:center">
+        <button type="button" id="btnPick">选择图片</button>
+        <button type="button" class="secondary" id="btnSample">用样页试跑</button>
+        <label style="font-size:0.85rem;opacity:.85;display:flex;align-items:center;gap:.35rem;cursor:pointer">
+          <input type="radio" name="engine" value="deepseek" id="engDeepseek" checked />
+          DeepSeek
+        </label>
+        <label style="font-size:0.85rem;opacity:.85;display:flex;align-items:center;gap:.35rem;cursor:pointer">
+          <input type="radio" name="engine" value="local" id="engLocal" />
+          本地
+        </label>
+      </div>
+      <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/bmp" />
+    </section>
+
+    <div class="status" id="status"></div>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>识别标注图</h2>
+        <div class="preview" id="preview">
+          <div class="placeholder">上传后这里显示标注结果</div>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>识别结果</h2>
+        <div class="summary" id="summary" hidden>
+          <div class="stat"><b id="sGroups">0</b><span>印章组</span></div>
+          <div class="stat"><b id="sCells">0</b><span>盖印单元</span></div>
+          <div class="stat"><b id="sZhi">0</b><span>知章合计</span></div>
+          <div class="stat"><b id="sXing">0</b><span>行章合计</span></div>
+        </div>
+        <div class="list" id="list">
+          <div class="placeholder" style="opacity:.5;padding:.5rem 0">尚无结果</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const statusEl = document.getElementById("status");
+    const preview = document.getElementById("preview");
+    const list = document.getElementById("list");
+    const summary = document.getElementById("summary");
+
+    function setStatus(msg, kind) {
+      statusEl.textContent = msg || "";
+      statusEl.className = "status" + (kind ? " " + kind : "");
+    }
+
+    function renderResult(data) {
+      const s = data.summary || {};
+      summary.hidden = false;
+      document.getElementById("sGroups").textContent = s.groups ?? 0;
+      document.getElementById("sCells").textContent = s.cells ?? 0;
+      document.getElementById("sZhi").textContent = s.zhi_total ?? 0;
+      document.getElementById("sXing").textContent = s.xing_total ?? 0;
+
+      if (data.preview_base64) {
+        preview.innerHTML = `<img alt="识别结果" src="data:image/jpeg;base64,${data.preview_base64}" />`;
+      } else if (data.result_image) {
+        preview.innerHTML = `<img alt="识别结果" src="${data.result_image}" />`;
+      }
+
+      const stamps = data.stamps || [];
+      if (!stamps.length) {
+        list.innerHTML = `<div class="placeholder" style="opacity:.5">未检测到印章</div>`;
+        return;
+      }
+      list.innerHTML = stamps.map((st, i) => {
+        const d = st.corner_digits || {};
+        const ori = st.orientation == null ? "—" : (st.orientation + "°");
+        const pos = st.row >= 0 ? `R${st.row}C${st.col}` : "未入格";
+        const fmt = (v) => (v === null || v === undefined ? "—" : v);
+        return `<article class="card">
+          <div class="title">${i + 1}. ${st.method_name}</div>
+          <div class="meta">编号 ${st.method_id} · ${pos} · 置信度 ${st.confidence}
+ · 朝向 ${ori}</div>
+          <div class="meta">知章 ${st.zhi} · 行章 ${st.xing}</div>
+          <div class="digits">
+            <div>左上：<strong>${fmt(d["左上"])}</strong></div>
+            <div>右上：<strong>${fmt(d["右上"])}</strong></div>
+            <div>左下：<strong>${fmt(d["左下"])}</strong></div>
+            <div>右下：<strong>${fmt(d["右下"])}</strong></div>
+          </div>
+        </article>`;
+      }).join("");
+    }
+
+    function selectedEngine() {
+      const el = document.querySelector('input[name="engine"]:checked');
+      return el ? el.value : "deepseek";
+    }
+
+    function setBusy(busy) {
+      document.getElementById("btnPick").disabled = busy;
+      document.getElementById("btnSample").disabled = busy;
+      document.querySelectorAll('input[name="engine"]').forEach((el) => { el.disabled = busy; });
+    }
+
+    async function postRecognize(fd, engine) {
+      setBusy(true);
+      const started = Date.now();
+      let tick = null;
+      if (engine === "deepseek") {
+        setStatus("DeepSeek 识别中（约 15–60 秒）…", "");
+        tick = setInterval(() => {
+          const sec = Math.round((Date.now() - started) / 1000);
+          setStatus(`DeepSeek 识别中…已等待 ${sec}s`, "");
+        }, 1000);
+      } else {
+        setStatus("本地识别中…", "");
+      }
+      try {
+        const res = await fetch("/api/recognize", { method: "POST", body: fd });
+        const data = await res.json();
+        if (!data.ok) {
+          setStatus(data.error || "识别失败", "err");
+          return;
+        }
+        const eng = data.engine === "deepseek" ? "DeepSeek" : "本地";
+        const sec = Math.round((Date.now() - started) / 1000);
+        setStatus(`完成（${eng}）：共 ${data.summary.groups} 组印章 · ${sec}s`, "ok");
+        renderResult(data);
+      } finally {
+        if (tick) clearInterval(tick);
+        setBusy(false);
+      }
+    }
+
+    async function recognizeFile(file) {
+      const engine = selectedEngine();
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("engine", engine);
+      await postRecognize(fd, engine);
+    }
+
+    async function recognizeSample() {
+      const engine = selectedEngine();
+      const fd = new FormData();
+      fd.append("sample", "1");
+      fd.append("engine", engine);
+      await postRecognize(fd, engine);
+    }
+
+    fetch("/api/status")
+      .then((r) => r.json())
+      .then((s) => {
+        if (!s.deepseek_configured) {
+          document.getElementById("engLocal").checked = true;
+          setStatus("未配置 DEEPSEEK_API_KEY，已切到本地引擎。可在项目根目录 .env 写入密钥后重启。", "err");
+        }
+      })
+      .catch(() => {});
+
+    document.getElementById("btnPick").addEventListener("click", (e) => {
+      e.stopPropagation();
+      fileInput.click();
+    });
+    document.getElementById("btnSample").addEventListener("click", (e) => {
+      e.stopPropagation();
+      recognizeSample().catch((err) => setStatus(String(err), "err"));
+    });
+    dropZone.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", () => {
+      const f = fileInput.files && fileInput.files[0];
+      if (f) recognizeFile(f).catch((err) => setStatus(String(err), "err"));
+    });
+
+    ["dragenter", "dragover"].forEach((ev) => {
+      dropZone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        dropZone.classList.add("drag");
+      });
+    });
+    ["dragleave", "drop"].forEach((ev) => {
+      dropZone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("drag");
+      });
+    });
+    dropZone.addEventListener("drop", (e) => {
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) recognizeFile(f).catch((err) => setStatus(String(err), "err"));
+    });
+  </script>
+</body>
+</html>

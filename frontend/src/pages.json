@@ -1,0 +1,131 @@
+{
+  "pages": [
+    { "path": "pages/splash/splash", "style": { "navigationStyle": "custom" } },
+    { "path": "pages/login/login", "style": { "navigationStyle": "custom" } },
+    {
+      "path": "pages/register/register",
+      "style": {
+        "navigationBarTitleText": "家长注册",
+        "navigationBarBackgroundColor": "#DBE7FF",
+        "backgroundColor": "#EEF2F7"
+      }
+    },
+    { "path": "pages/home/home", "style": { "navigationBarTitleText": "首页", "navigationBarBackgroundColor": "#2563EB", "navigationBarTextStyle": "white" } },
+    { "path": "pages/scan/scan", "style": { "navigationBarTitleText": "印章采集", "navigationBarBackgroundColor": "#FFFFFF" } },
+    { "path": "pages/report/report", "style": { "navigationBarTitleText": "成长评价报告", "navigationBarBackgroundColor": "#FFFFFF" } },
+    { "path": "pages/mall/mall", "style": { "navigationBarTitleText": "周边商城", "navigationBarBackgroundColor": "#FFFFFF" } },
+    {
+      "path": "pages/mine/mine",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "navigationBarBackgroundColor": "#2563EB",
+        "navigationBarTextStyle": "white",
+        "backgroundColor": "#F3F4F6"
+      }
+    },
+    { "path": "pages/mallGate/mallGate", "style": { "navigationBarTitleText": "进入周边商城" } },
+    { "path": "pages/code/code", "style": { "navigationBarTitleText": "评价编码表" } },
+    { "path": "pages/stamp/stamp", "style": { "navigationBarTitleText": "虚拟盖章" } },
+    { "path": "pages/message/message", "style": { "navigationBarTitleText": "消息通知" } },
+    { "path": "pages/children/children", "style": { "navigationBarTitleText": "我的孩子" } },
+    {
+      "path": "pages/classOverview/classOverview",
+      "style": {
+        "navigationBarTitleText": "班级概览",
+        "navigationBarBackgroundColor": "#2563EB",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    { "path": "pages/studentManage/studentManage", "style": { "navigationBarTitleText": "学生管理" } },
+    { "path": "pages/studentDetail/studentDetail", "style": { "navigationBarTitleText": "学生详情" } },
+    { "path": "pages/teacher/teacher", "style": { "navigationBarTitleText": "教师管理" } },
+    { "path": "pages/order/order", "style": { "navigationBarTitleText": "我的订单" } },
+    { "path": "pages/payment/payment", "style": { "navigationBarTitleText": "上传支付凭证" } },
+    { "path": "pages/settings/settings", "style": { "navigationBarTitleText": "设置" } },
+    { "path": "pages/profile/profile", "style": { "navigationBarTitleText": "个人资料" } },
+    { "path": "pages/password/password", "style": { "navigationBarTitleText": "修改密码" } },
+    { "path": "pages/help/help", "style": { "navigationBarTitleText": "帮助中心" } },
+    { "path": "pages/about/about", "style": { "navigationBarTitleText": "关于我们" } },
+    { "path": "pages/referral/referral", "style": { "navigationBarTitleText": "我的推荐" } },
+    { "path": "pages/goals/goals", "style": { "navigationBarTitleText": "激励目标" } },
+    { "path": "pages/notify/notify", "style": { "navigationBarTitleText": "消息通知设置" } },
+    { "path": "pages/privacy/privacy", "style": { "navigationBarTitleText": "隐私设置" } },
+    { "path": "pages/legal/legal", "style": { "navigationBarTitleText": "协议" } },
+    { "path": "pages/shop/shop", "style": { "navigationBarTitleText": "商品详情" } },
+    { "path": "pages/catalog/catalog", "style": { "navigationBarTitleText": "全部商品" } }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "淮安学长",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F9FAFB"
+  },
+  "tabBar": {
+    "color": "#9CA3AF",
+    "selectedColor": "#2563EB",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        /* #ifdef H5 */
+        "iconPath": "/static/tab-home.png",
+        "selectedIconPath": "/static/tab-home-active.png"
+        /* #endif */
+        /* #ifndef H5 */
+        "iconPath": "static/tab-home.png",
+        "selectedIconPath": "static/tab-home-active.png"
+        /* #endif */
+      },
+      {
+        "pagePath": "pages/scan/scan",
+        "text": "采集",
+        /* #ifdef H5 */
+        "iconPath": "/static/tab-scan.png",
+        "selectedIconPath": "/static/tab-scan-active.png"
+        /* #endif */
+        /* #ifndef H5 */
+        "iconPath": "static/tab-scan.png",
+        "selectedIconPath": "static/tab-scan-active.png"
+        /* #endif */
+      },
+      {
+        "pagePath": "pages/report/report",
+        "text": "报告",
+        /* #ifdef H5 */
+        "iconPath": "/static/tab-report.png",
+        "selectedIconPath": "/static/tab-report-active.png"
+        /* #endif */
+        /* #ifndef H5 */
+        "iconPath": "static/tab-report.png",
+        "selectedIconPath": "static/tab-report-active.png"
+        /* #endif */
+      },
+      {
+        "pagePath": "pages/mall/mall",
+        "text": "商城",
+        /* #ifdef H5 */
+        "iconPath": "/static/tab-mall.png",
+        "selectedIconPath": "/static/tab-mall-active.png"
+        /* #endif */
+        /* #ifndef H5 */
+        "iconPath": "static/tab-mall.png",
+        "selectedIconPath": "static/tab-mall-active.png"
+        /* #endif */
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的",
+        /* #ifdef H5 */
+        "iconPath": "/static/tab-mine.png",
+        "selectedIconPath": "/static/tab-mine-active.png"
+        /* #endif */
+        /* #ifndef H5 */
+        "iconPath": "static/tab-mine.png",
+        "selectedIconPath": "static/tab-mine-active.png"
+        /* #endif */
+      }
+    ]
+  }
+}

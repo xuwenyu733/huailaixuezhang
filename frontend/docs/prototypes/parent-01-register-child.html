@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 注册验证码 · 孩子编辑</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{--blue:#2563eb;--ink:#111827;--muted:#6b7280;--bg:#f3f4f6;--line:#e5e7eb}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;font-family:"Noto Sans SC",sans-serif;background:#0f172a;color:var(--ink);display:flex;flex-direction:column;align-items:center;padding:28px 12px 48px;gap:14px}
+    .bar{width:min(400px,100%);display:flex;justify-content:space-between;color:#94a3b8;font-size:.85rem}
+    .bar a{color:#93c5fd;text-decoration:none}
+    .phone{width:390px;max-width:100%;height:844px;border-radius:36px;background:#111;padding:10px;box-shadow:0 28px 70px rgba(0,0,0,.45)}
+    .screen{height:100%;border-radius:28px;overflow:hidden;background:var(--bg);position:relative}
+    .page{display:none;flex-direction:column;position:absolute;inset:0}
+    .page.on{display:flex;animation:in .22s ease}
+    @keyframes in{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+    .nav{background:linear-gradient(180deg,#dbe7ff,#eef2f7);padding:48px 20px 18px}
+    .nav.blue{background:#2563eb;color:#fff;padding:44px 16px 14px;display:flex;align-items:center;gap:8px}
+    .nav.blue button{border:0;background:rgba(255,255,255,.18);color:#fff;width:32px;height:32px;border-radius:10px;cursor:pointer}
+    .brand{font-family:Outfit,sans-serif;font-size:1.6rem;font-weight:700}
+    .brand span{color:var(--blue)}
+    .sub{font-size:13px;color:var(--muted);margin-top:4px}
+    .body{flex:1;overflow:auto;padding:14px}
+    .card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px}
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px;font-weight:600}
+    input,select,textarea{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;outline:none}
+    textarea{height:80px;padding:10px 12px;resize:none}
+    input:focus,select:focus{border-color:var(--blue)}
+    .row{display:flex;gap:8px;align-items:center}
+    .row input{flex:1}
+    .code-btn{border:0;background:#eff6ff;color:var(--blue);font-weight:600;border-radius:10px;padding:0 12px;height:44px;white-space:nowrap;cursor:pointer;font:inherit;font-size:13px}
+    .btn{width:100%;border:0;border-radius:12px;background:var(--blue);color:#fff;height:48px;font:inherit;font-weight:600;cursor:pointer;margin-top:8px}
+    .btn.ghost{background:#fff;color:var(--blue);border:1px solid #bfdbfe}
+    .agree{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--muted);margin:12px 0}
+    .agree input{width:18px;height:18px;margin-top:2px}
+    .toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;z-index:9}
+    .toast.on{opacity:1}
+    .hint{color:#64748b;font-size:.78rem;text-align:center;max-width:390px}
+    .tabs{display:flex;gap:8px;margin-bottom:12px}
+    .tabs button{flex:1;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px;font:inherit;font-size:12px;cursor:pointer;color:var(--muted)}
+    .tabs button.on{border-color:var(--blue);background:#eff6ff;color:var(--blue);font-weight:600}
+    .mask{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;z-index:5}
+    .sheet{width:100%;background:#fff;border-radius:20px 20px 0 0;padding:20px 16px 28px}
+    .li{font-size:13px;padding:10px 0;border-bottom:1px solid #f3f4f6;color:#374151}
+  </style>
+</head>
+<body>
+  <div class="bar"><a href="parent-index.html">← 家长缺口</a><span>01 / 05</span><a href="parent-02-virtual-stamp.html">下一项 →</a></div>
+  <div class="phone"><div class="screen">
+    <!-- 注册 -->
+    <section class="page on" id="reg">
+      <div class="nav">
+        <div class="brand">淮来<span>学长</span></div>
+        <div class="sub">家长注册 · 短信验证码（设计稿）</div>
+      </div>
+      <div class="body">
+        <div class="card">
+          <label>手机号</label>
+          <input value="13900001111" maxlength="11" />
+          <label>验证码</label>
+          <div class="row">
+            <input id="sms" placeholder="6 位验证码" maxlength="6" />
+            <button class="code-btn" id="sendBtn" onclick="sendCode()">获取验证码</button>
+          </div>
+          <label>密码</label>
+          <input type="password" value="a123456" />
+          <label>推荐码（选填）</label>
+          <input placeholder="如 HAXXXXXX" />
+          <div class="agree">
+            <input type="checkbox" id="ag" checked />
+            <span>已阅读并同意《用户协议》与《隐私政策》</span>
+          </div>
+          <button class="btn" onclick="go('edit')">注册并继续</button>
+        </div>
+        <button class="btn ghost" onclick="toast('设计稿·已有账号登录')">已有账号去登录</button>
+      </div>
+    </section>
+
+    <!-- 孩子编辑 -->
+    <section class="page" id="edit">
+      <div class="nav blue">
+        <button onclick="go('reg')">‹</button>
+        <div style="flex:1;font-weight:700">编辑孩子信息</div>
+        <span style="font-size:13px;opacity:.9" onclick="toast('设计稿·已保存')">保存</span>
+      </div>
+      <div class="body">
+        <div class="card">
+          <label>学生姓名</label>
+          <input value="测试同学" />
+          <label>性别</label>
+          <select><option>男</option><option selected>女</option><option>未填写</option></select>
+          <label>生日</label>
+          <input type="date" value="2016-05-12" />
+          <label>入学时间</label>
+          <input type="date" value="2022-09-01" />
+          <label>学号</label>
+          <input value="20261001" />
+          <label>学校</label>
+          <input value="淮安实验小学" />
+          <label>班级</label>
+          <input value="三年级 2 班" />
+          <label>记录卡编号</label>
+          <input value="1230" />
+        </div>
+        <div class="card">
+          <div class="li">班级码：未绑定</div>
+          <button class="btn" onclick="document.getElementById('bind').style.display='flex'">绑定班级</button>
+        </div>
+        <button class="btn ghost" style="color:#be123c;border-color:#fecdd3" onclick="toast('设计稿·删除需二次确认')">删除该学生</button>
+      </div>
+      <div class="mask" id="bind" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+        <div class="sheet" onclick="event.stopPropagation()">
+          <div style="font-weight:700;margin-bottom:8px">输入班级码</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px">向班主任索取班级码，绑定后教师可在学生管理中看到该生。</p>
+          <input id="cc" placeholder="如 HA-G3-02" value="HA-G3-02" />
+          <button class="btn" onclick="bindOk()">确认绑定</button>
+        </div>
+      </div>
+    </section>
+  </div></div>
+  <p class="hint">对应文档 4.1.3 / 4.9–4.11 · 落地到 register + children/studentDetail 编辑页</p>
+  <div class="toast" id="toast"></div>
+  <script>
+    function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));document.getElementById(id).classList.add('on')}
+    function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(window.__t);window.__t=setTimeout(()=>t.classList.remove('on'),1600)}
+    let sec=0
+    function sendCode(){
+      if(sec>0)return
+      toast('设计稿·验证码已发送 123456')
+      document.getElementById('sms').value='123456'
+      sec=60;const b=document.getElementById('sendBtn')
+      const tick=()=>{if(sec<=0){b.textContent='获取验证码';return}b.textContent=sec+'s';sec--;setTimeout(tick,1000)}
+      tick()
+    }
+    function bindOk(){
+      document.getElementById('bind').style.display='none'
+      toast('已绑定班级 '+document.getElementById('cc').value)
+    }
+  </script>
+</body>
+</html>

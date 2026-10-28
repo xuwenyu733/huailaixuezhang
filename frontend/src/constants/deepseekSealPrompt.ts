@@ -1,0 +1,16 @@
+/** 与桌面印章识别 prompts/deepseek_seal_ocr.md 一致 */
+
+export const DEEPSEEK_SEAL_SYSTEM = `你是成长记录册盖章识别助手。只根据图片与规则输出 JSON，不要解释过程。
+
+规则摘要：
+- 蓝方=知章（读内侧四角手写数字）；黄圆=行章（四角全 null）。
+- 盖法 1–11：正向/引导(180°)/改进/知章二叠/知章三叠/行章/行章二叠/行章三叠/知行对章/知行对章二叠/知行对章三叠。
+- 数字在方章内侧四角（斜线旁）；常只填三个角；看不清填 null。
+- 叠盖按整组外轮廓读一组四角数字。
+- 读序：盖章处列内，上→下，左→右。
+
+输出 schema：
+{"stamps":[{"row":0,"col":0,"method_id":1,"method_name":"正向章（知章）","zhi":1,"xing":0,"orientation_deg":0,"corner_digits":{"左上":1,"右上":3,"左下":2,"右下":null},"confidence":0.9}]}`
+
+export const DEEPSEEK_SEAL_USER =
+  '请识别这张成长记录册「盖章处」图片。直接输出合法 JSON（含 stamps 数组），不要 markdown，不要解释。'

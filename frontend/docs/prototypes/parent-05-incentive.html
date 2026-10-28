@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 激励目标 · 商城 PIN</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{--blue:#2563eb;--ink:#111827;--muted:#6b7280;--bg:#f3f4f6;--line:#e5e7eb}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;font-family:"Noto Sans SC",sans-serif;background:#0f172a;color:var(--ink);display:flex;flex-direction:column;align-items:center;padding:28px 12px 48px;gap:14px}
+    .bar{width:min(400px,100%);display:flex;justify-content:space-between;color:#94a3b8;font-size:.85rem}
+    .bar a{color:#93c5fd;text-decoration:none}
+    .phone{width:390px;max-width:100%;height:844px;border-radius:36px;background:#111;padding:10px;box-shadow:0 28px 70px rgba(0,0,0,.45)}
+    .screen{height:100%;border-radius:28px;overflow:hidden;background:var(--bg);position:relative}
+    .page{display:none;flex-direction:column;position:absolute;inset:0}
+    .page.on{display:flex}
+    .nav{background:#fff;border-bottom:1px solid var(--line);padding:44px 14px 12px;display:flex;align-items:center;gap:8px}
+    .nav button{border:0;background:#f3f4f6;width:32px;height:32px;border-radius:10px;cursor:pointer}
+    .nav h1{flex:1;font-size:17px;font-weight:700}
+    .body{flex:1;overflow:auto;padding:12px}
+    .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px}
+    .goods{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .g{border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer}
+    .g .pic{height:80px;background:linear-gradient(145deg,#e0f2fe,#fef3c7)}
+    .g .info{padding:8px}
+    .g .n{font-size:13px;font-weight:600}
+    .g .p{font-size:12px;color:var(--blue);font-weight:700;margin-top:4px}
+    .btn{width:100%;border:0;border-radius:12px;background:var(--blue);color:#fff;height:46px;font:inherit;font-weight:600;cursor:pointer}
+    .btn.ghost{background:#eff6ff;color:var(--blue)}
+    .btn.ok{background:#059669}
+    .goal{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+    .goal .t{font-weight:600;font-size:14px}
+    .goal .s{font-size:12px;color:var(--muted);margin-top:4px}
+    .pin-box{display:flex;gap:8px;justify-content:center;margin:16px 0}
+    .pin-box input{width:44px;height:52px;text-align:center;font-size:20px;border:1px solid var(--line);border-radius:10px;font:inherit}
+    .switch{display:flex;align-items:center;justify-content:space-between;font-size:13px}
+    .toggle{width:44px;height:26px;border-radius:999px;background:#d1d5db;position:relative;cursor:pointer}
+    .toggle.on{background:var(--blue)}
+    .toggle i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+    .toggle.on i{left:21px}
+    .toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;z-index:9}
+    .toast.on{opacity:1}
+    .hint{color:#64748b;font-size:.78rem;text-align:center;max-width:390px;line-height:1.45}
+    label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px;font-weight:600}
+    input[type=text],textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit}
+    textarea{height:72px;resize:none}
+  </style>
+</head>
+<body>
+  <div class="bar"><a href="parent-04-haitang.html">← 上一项</a><span>05 / 05</span><a href="parent-index.html">目录 →</a></div>
+  <div class="phone"><div class="screen">
+    <!-- PIN 门禁（可关） -->
+    <section class="page on" id="pin">
+      <div class="nav"><button onclick="location.href='parent-index.html'">‹</button><h1>进入周边商城</h1></div>
+      <div class="body">
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:6px">独立访问密码</div>
+          <p style="font-size:12px;color:var(--muted);line-height:1.5">文档 4.6：商城与激励面向家长，避免孩子误操作。产品可配置关闭。</p>
+          <div class="switch" style="margin-top:14px">
+            <span>启用商城 PIN</span>
+            <div class="toggle on" id="pinToggle" onclick="togglePin()"><i></i></div>
+          </div>
+        </div>
+        <div class="card" id="pinPanel">
+          <div style="text-align:center;font-size:13px;color:var(--muted)">请输入 4–6 位家长密码</div>
+          <div class="pin-box">
+            <input maxlength="1" />
+            <input maxlength="1" />
+            <input maxlength="1" />
+            <input maxlength="1" />
+          </div>
+          <button class="btn" onclick="enterMall()">解锁进入</button>
+        </div>
+        <button class="btn ghost" id="skipPin" style="display:none" onclick="enterMall()">PIN 已关闭 · 直接进入</button>
+      </div>
+    </section>
+
+    <!-- 激励商城 -->
+    <section class="page" id="mall">
+      <div class="nav"><button onclick="go('pin')">‹</button><h1>激励商城</h1><span style="font-size:12px;color:var(--blue)" onclick="go('goals')">目标列表</span></div>
+      <div class="body">
+        <div class="card" style="font-size:12px;color:var(--muted)">仅家长可见 · 选商品加入激励目标，达标后确认自动下单</div>
+        <div class="goods">
+          <div class="g" onclick="go('detail')"><div class="pic"></div><div class="info"><div class="n">《三体》选章</div><div class="p">¥38.00</div></div></div>
+          <div class="g" onclick="go('detail')"><div class="pic" style="background:linear-gradient(145deg,#ffedd5,#fce7f3)"></div><div class="info"><div class="n">IP 玩偶 20cm</div><div class="p">¥58.00</div></div></div>
+          <div class="g" onclick="go('detail')"><div class="pic" style="background:linear-gradient(145deg,#ecfccb,#e0f2fe)"></div><div class="info"><div class="n">百乐圆珠笔</div><div class="p">¥5.00</div></div></div>
+          <div class="g" onclick="go('detail')"><div class="pic" style="background:linear-gradient(145deg,#e0e7ff,#fef9c3)"></div><div class="info"><div class="n">多功能笔盒</div><div class="p">¥15.00</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 商品详情加目标 -->
+    <section class="page" id="detail">
+      <div class="nav"><button onclick="go('mall')">‹</button><h1>商品详情</h1></div>
+      <div class="body">
+        <div class="card">
+          <div style="height:140px;border-radius:12px;background:linear-gradient(145deg,#e0f2fe,#fef3c7);margin-bottom:10px"></div>
+          <div style="font-weight:700;font-size:16px">《三体》选章</div>
+          <div style="color:var(--blue);font-weight:700;margin-top:4px">¥38.00</div>
+          <p style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5">第一章–第三章可选。达成目标后自动走激励下单流程。</p>
+        </div>
+        <div class="card">
+          <label>激励目标描述</label>
+          <textarea id="goalText">本周语文作业全优，且无引导章</textarea>
+          <label>关联孩子</label>
+          <input type="text" value="测试同学" readonly />
+          <button class="btn" style="margin-top:12px" onclick="addGoal()">加入目标列表</button>
+          <button class="btn ghost" style="margin-top:8px" onclick="toast('设计稿·联系客服')">联系客服</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 目标列表 -->
+    <section class="page" id="goals">
+      <div class="nav"><button onclick="go('mall')">‹</button><h1>激励目标</h1></div>
+      <div class="body">
+        <div class="goal">
+          <div class="t">本周语文作业全优</div>
+          <div class="s">商品：《三体》选章 · ¥38 · 测试同学</div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn ok" style="height:40px;font-size:13px" onclick="toast('设计稿·已确认达标并下单')">确认达标下单</button>
+            <button class="btn ghost" style="height:40px;font-size:13px;width:auto;padding:0 12px" onclick="toast('设计稿·编辑')">编辑</button>
+          </div>
+        </div>
+        <div class="goal">
+          <div class="t">连续 7 天早读</div>
+          <div class="s">商品：百乐圆珠笔 · ¥5 · 进行中</div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn ghost" style="height:40px;font-size:13px" onclick="toast('设计稿·尚未达标')">未达标</button>
+            <button class="btn ghost" style="height:40px;font-size:13px;width:auto;padding:0 12px;color:#be123c" onclick="toast('设计稿·已删除')">删除</button>
+          </div>
+        </div>
+        <button class="btn" onclick="go('mall')">+ 从商城添加</button>
+      </div>
+    </section>
+  </div></div>
+  <p class="hint">对应 4.6.4 / 4.6 门禁 · PIN 默认开，可关；落地 mallGate + goals + shop</p>
+  <div class="toast" id="toast"></div>
+  <script>
+    let pinOn=true
+    function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));document.getElementById(id).classList.add('on')}
+    function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(window.__t);window.__t=setTimeout(()=>t.classList.remove('on'),1600)}
+    function togglePin(){
+      pinOn=!pinOn
+      document.getElementById('pinToggle').classList.toggle('on',pinOn)
+      document.getElementById('pinPanel').style.display=pinOn?'block':'none'
+      document.getElementById('skipPin').style.display=pinOn?'none':'block'
+      toast(pinOn?'已启用商城 PIN（文档默认）':'已关闭 PIN（产品可选）')
+    }
+    function enterMall(){go('mall');toast('已进入激励商城')}
+    function addGoal(){go('goals');toast('已加入目标列表')}
+  </script>
+</body>
+</html>

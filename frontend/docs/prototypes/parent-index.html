@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>淮来学长 · 家长端缺口原型</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --blue:#2563eb; --ink:#0f172a; --muted:#64748b; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      min-height:100vh;font-family:"Noto Sans SC",sans-serif;color:var(--ink);
+      background:linear-gradient(165deg,#dbe4f5,#eef2f7 50%,#f4f6fa);
+      padding:40px 20px 60px;
+    }
+    .wrap{max-width:720px;margin:0 auto}
+    a.back{color:#64748b;text-decoration:none;font-size:.9rem}
+    h1{font-family:Outfit,sans-serif;font-size:2rem;margin:16px 0 8px;letter-spacing:-.02em}
+    h1 span{color:var(--blue)}
+    .lead{color:var(--muted);line-height:1.6;margin-bottom:28px}
+    .list{display:flex;flex-direction:column;gap:12px}
+    a.item{
+      display:block;background:#fff;border-radius:16px;padding:18px 20px;
+      text-decoration:none;color:inherit;border:1px solid rgba(15,23,42,.06);
+      box-shadow:0 8px 24px rgba(15,23,42,.05);
+    }
+    a.item:hover{border-color:#bfdbfe}
+    .num{font-family:Outfit,sans-serif;font-weight:700;color:var(--blue);font-size:.85rem}
+    a.item h2{font-size:1.1rem;margin:4px 0}
+    a.item p{font-size:.88rem;color:var(--muted);line-height:1.5}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html">← 原型总入口</a>
+    <h1>家长端 · 缺口<span>原型</span></h1>
+    <p class="lead">按需求文档第 4 章缺口优先级 1→5。手机框可点，未接接口。</p>
+    <div class="list">
+      <a class="item" href="parent-01-register-child.html">
+        <div class="num">01</div>
+        <h2>注册验证码 + 孩子编辑 / 绑定班级</h2>
+        <p>短信验证码注册；孩子编辑（性别/生日/入学）；绑定班级码弹窗。</p>
+      </a>
+      <a class="item" href="parent-02-virtual-stamp.html">
+        <div class="num">02</div>
+        <h2>虚拟盖章 · 11 盖法 + 近 7 日历史</h2>
+        <p>正向/引导/改进/叠章/行章/对章全套选择与当量预览、历史列表。</p>
+      </a>
+      <a class="item" href="parent-03-report-records.html">
+        <div class="num">03</div>
+        <h2>报告 PDF 导出 + 全部评价</h2>
+        <p>导出确认流；首页「查看全部」进入完整评价时间线。</p>
+      </a>
+      <a class="item" href="parent-04-haitang.html">
+        <div class="num">04</div>
+        <h2>海棠成长树 · 学期周视图</h2>
+        <p>一学期按周列的家庭端编码表，单元格盖章状态。</p>
+      </a>
+      <a class="item" href="parent-05-incentive.html">
+        <div class="num">05</div>
+        <h2>激励目标下单 + 商城 PIN（可配置）</h2>
+        <p>商品→加目标→达标确认下单；PIN 开/关示意（文档要、产品曾关）。</p>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

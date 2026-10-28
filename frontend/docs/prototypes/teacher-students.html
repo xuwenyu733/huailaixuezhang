@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>淮来学长 · 教师端学生管理原型</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --blue: #2563eb;
+      --blue-d: #1d4ed8;
+      --ink: #111827;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --bg: #f3f4f6;
+      --card: #fff;
+      --amber: #f59e0b;
+      --rose: #e11d48;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: "Noto Sans SC", sans-serif;
+      background:
+        linear-gradient(135deg, #1e3a5f 0%, #0f172a 50%, #1e293b 100%);
+      color: var(--ink);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px 48px;
+      gap: 20px;
+    }
+    .topbar {
+      width: min(420px, 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #e2e8f0;
+    }
+    .topbar a {
+      color: #93c5fd;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .topbar h1 {
+      font-family: Outfit, sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .phone {
+      width: 390px;
+      height: 844px;
+      max-width: 100%;
+      border-radius: 36px;
+      background: #0f172a;
+      padding: 12px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+    }
+    .screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 28px;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .page {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      inset: 0;
+      background: var(--bg);
+    }
+    .page.active { display: flex; animation: in 0.25s ease; }
+    @keyframes in {
+      from { opacity: 0; transform: translateX(12px); }
+      to { opacity: 1; transform: none; }
+    }
+    .status {
+      height: 44px;
+      padding: 12px 20px 0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--blue);
+      color: #fff;
+    }
+    .nav {
+      background: var(--blue);
+      color: #fff;
+      padding: 8px 16px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav .back {
+      width: 32px; height: 32px;
+      border: none; background: rgba(255,255,255,0.15);
+      border-radius: 10px; color: #fff; cursor: pointer; font-size: 16px;
+    }
+    .nav .title { font-size: 17px; font-weight: 700; flex: 1; }
+    .nav .sub { font-size: 11px; opacity: 0.85; }
+    .body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 14px 80px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(17,24,39,0.04);
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .stat {
+      text-align: center;
+      padding: 12px 6px;
+      background: #eff6ff;
+      border-radius: 12px;
+    }
+    .stat .n {
+      display: block;
+      font-family: Outfit, sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--blue);
+    }
+    .stat .l { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .h {
+      font-size: 14px; font-weight: 700; margin-bottom: 10px;
+    }
+    .attn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .attn:last-child { border-bottom: none; padding-bottom: 0; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--amber);
+      flex-shrink: 0;
+    }
+    .attn .t { font-size: 13px; font-weight: 600; }
+    .attn .d { font-size: 11px; color: var(--muted); }
+    .btn {
+      display: block; width: 100%;
+      border: none; border-radius: 12px;
+      background: var(--blue); color: #fff;
+      font-size: 15px; font-weight: 600;
+      padding: 13px; cursor: pointer;
+      font-family: inherit;
+    }
+    .btn.ghost {
+      background: #fff; color: var(--blue);
+      border: 1px solid #bfdbfe; margin-top: 8px;
+    }
+    .search {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      margin-bottom: 8px;
+      outline: none;
+    }
+    .search:focus { border-color: var(--blue); }
+    .filter-row {
+      display: flex; gap: 8px; margin-bottom: 12px;
+    }
+    .filter-row .search { margin: 0; flex: 1; }
+    .mini {
+      border: none; background: var(--blue); color: #fff;
+      border-radius: 10px; padding: 0 14px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      font-family: inherit; white-space: nowrap;
+    }
+    .row {
+      display: flex; align-items: center; gap: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .row:active { background: #f8fafc; }
+    .av {
+      width: 42px; height: 42px; border-radius: 14px;
+      background: linear-gradient(145deg, #3b82f6, #1d4ed8);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px; flex-shrink: 0;
+    }
+    .av.muted { background: #9ca3af; }
+    .meta { flex: 1; min-width: 0; }
+    .meta .n { font-size: 15px; font-weight: 600; display: block; }
+    .meta .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .zze {
+      font-family: Outfit, sans-serif;
+      font-weight: 700; color: var(--blue); font-size: 15px;
+    }
+    .zze.hid { color: #9ca3b8; }
+    .tabs {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      height: 56px;
+      background: #fff;
+      border-top: 1px solid var(--line);
+      display: flex;
+      padding-bottom: 6px;
+    }
+    .tabs button {
+      flex: 1; border: none; background: none;
+      font-family: inherit; font-size: 10px; color: #9ca3af;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 2px; cursor: pointer;
+    }
+    .tabs button.on { color: var(--blue); font-weight: 600; }
+    .tabs .ico {
+      width: 22px; height: 22px; border-radius: 6px;
+      border: 2px solid currentColor; opacity: 0.9;
+    }
+    .empty {
+      text-align: center; padding: 48px 20px; color: var(--muted);
+    }
+    .empty .big {
+      width: 72px; height: 72px; margin: 0 auto 16px;
+      border-radius: 20px; background: #e5e7eb;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; color: #9ca3af;
+    }
+    .li { display: block; font-size: 13px; color: var(--ink); margin: 6px 0; }
+    .li span { color: var(--muted); }
+    .stamp-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .stamp-item:last-child { border-bottom: none; }
+    .badge {
+      font-size: 11px; padding: 2px 8px; border-radius: 999px;
+      background: #dbeafe; color: var(--blue-d); font-weight: 600;
+    }
+    .badge.do { background: #fef3c7; color: #b45309; }
+    .badge.combo { background: #d1fae5; color: #047857; }
+    .toast {
+      position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%);
+      background: rgba(15,23,42,0.92); color: #fff;
+      padding: 10px 18px; border-radius: 10px; font-size: 13px;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      z-index: 99; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+    .hint {
+      width: min(420px, 100%);
+      color: #94a3b8; font-size: 0.8rem; text-align: center; line-height: 1.5;
+    }
+    .seg {
+      display: flex; gap: 6px; margin-bottom: 12px;
+    }
+    .seg button {
+      flex: 1; border: 1px solid var(--line); background: #fff;
+      border-radius: 8px; padding: 8px; font-size: 12px;
+      font-family: inherit; cursor: pointer; color: var(--muted);
+    }
+    .seg button.on {
+      border-color: var(--blue); background: #eff6ff; color: var(--blue); font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="index.html">← 原型入口</a>
+    <h1>教师端 · 学生管理</h1>
+    <a href="admin.html">总后台 →</a>
+  </div>
+
+  <div class="phone">
+    <div class="screen">
+      <!-- A 班级概览 -->
+      <section class="page active" id="p-overview">
+        <div class="status"><span>9:41</span><span>T9901 李老师</span></div>
+        <div class="nav">
+          <div>
+            <div class="title">班级概览</div>
+            <div class="sub">淮安实验小学 · HA-G3-02</div>
+          </div>
+        </div>
+        <div class="body">
+          <div class="card">
+            <div class="stats">
+              <div class="stat"><span class="n">32</span><span class="l">本班学生</span></div>
+              <div class="stat"><span class="n">86</span><span class="l">本周盖章</span></div>
+              <div class="stat"><span class="n">3</span><span class="l">待关注</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="h">待关注</div>
+            <div class="attn">
+              <span class="dot"></span>
+              <div>
+                <div class="t">王小明 · 近 7 日无盖章</div>
+                <div class="d">记录卡 CARD-031</div>
+              </div>
+            </div>
+            <div class="attn">
+              <span class="dot"></span>
+              <div>
+                <div class="t">陈思雨 · 家长未授权当量</div>
+                <div class="d">仅可查看档案，不可看 ZZE</div>
+              </div>
+            </div>
+            <div class="attn">
+              <span class="dot"></span>
+              <div>
+                <div class="t">刘浩 · 行章偏少</div>
+                <div class="d">知章 18 · 行章 1</div>
+              </div>
+            </div>
+          </div>
+          <button class="btn" onclick="go('p-list')">进入学生列表</button>
+          <button class="btn ghost" onclick="toast('设计稿·未接接口')">去采集盖章</button>
+        </div>
+        <div class="tabs">
+          <button class="on" onclick="go('p-overview')"><span class="ico"></span>概览</button>
+          <button onclick="go('p-list')"><span class="ico"></span>学生</button>
+          <button onclick="toast('示意：切到采集 Tab')"><span class="ico"></span>采集</button>
+          <button onclick="go('p-empty')"><span class="ico"></span>空态</button>
+        </div>
+      </section>
+
+      <!-- B 学生列表 -->
+      <section class="page" id="p-list">
+        <div class="status"><span>9:41</span><span>T9901</span></div>
+        <div class="nav">
+          <button class="back" onclick="go('p-overview')">‹</button>
+          <div class="title">学生管理</div>
+        </div>
+        <div class="body">
+          <div class="card" style="padding-bottom:10px">
+            <div class="h" style="margin-bottom:8px">共 6 人 · 班级码 HA-G3-02</div>
+            <input class="search" id="kw" placeholder="搜索学生姓名 / 记录卡" oninput="filterList()" />
+            <div class="filter-row">
+              <input class="search" id="classCode" value="HA-G3-02" placeholder="班级码筛选" />
+              <button class="mini" onclick="toast('设计稿·查询示意')">查询</button>
+            </div>
+            <div class="seg">
+              <button class="on" data-f="all" onclick="setFilter(this)">全部</button>
+              <button data-f="active" onclick="setFilter(this)">有数据</button>
+              <button data-f="hidden" onclick="setFilter(this)">未授权</button>
+            </div>
+          </div>
+
+          <div class="card row stu" data-name="测试同学" data-card="1230" data-type="active" onclick="openDetail('测试同学','测',false)">
+            <div class="av">测</div>
+            <div class="meta">
+              <span class="n">测试同学</span>
+              <span class="s">知章 12 · 对章 3 · 编码 1230</span>
+            </div>
+            <span class="zze">480</span>
+          </div>
+          <div class="card row stu" data-name="赵一凡" data-card="CARD-018" data-type="active" onclick="openDetail('赵一凡','赵',false)">
+            <div class="av">赵</div>
+            <div class="meta">
+              <span class="n">赵一凡</span>
+              <span class="s">知章 9 · 对章 2 · CARD-018</span>
+            </div>
+            <span class="zze">320</span>
+          </div>
+          <div class="card row stu" data-name="陈思雨" data-card="CARD-022" data-type="hidden" onclick="openDetail('陈思雨','陈',true)">
+            <div class="av muted">陈</div>
+            <div class="meta">
+              <span class="n">陈思雨</span>
+              <span class="s">家长未授权查看当量 · CARD-022</span>
+            </div>
+            <span class="zze hid">—</span>
+          </div>
+          <div class="card row stu" data-name="王小明" data-card="CARD-031" data-type="active" onclick="openDetail('王小明','王',false)">
+            <div class="av">王</div>
+            <div class="meta">
+              <span class="n">王小明</span>
+              <span class="s">知章 2 · 对章 0 · CARD-031</span>
+            </div>
+            <span class="zze">20</span>
+          </div>
+          <div class="card row stu" data-name="刘浩" data-card="CARD-007" data-type="active" onclick="openDetail('刘浩','刘',false)">
+            <div class="av">刘</div>
+            <div class="meta">
+              <span class="n">刘浩</span>
+              <span class="s">知章 18 · 对章 1 · CARD-007</span>
+            </div>
+            <span class="zze">210</span>
+          </div>
+          <div class="card row stu" data-name="周子涵" data-card="CARD-015" data-type="active" onclick="openDetail('周子涵','周',false)">
+            <div class="av">周</div>
+            <div class="meta">
+              <span class="n">周子涵</span>
+              <span class="s">知章 7 · 对章 2 · CARD-015</span>
+            </div>
+            <span class="zze">270</span>
+          </div>
+        </div>
+        <div class="tabs">
+          <button onclick="go('p-overview')"><span class="ico"></span>概览</button>
+          <button class="on" onclick="go('p-list')"><span class="ico"></span>学生</button>
+          <button onclick="toast('示意：切到采集 Tab')"><span class="ico"></span>采集</button>
+          <button onclick="go('p-empty')"><span class="ico"></span>空态</button>
+        </div>
+      </section>
+
+      <!-- C 学生详情 -->
+      <section class="page" id="p-detail">
+        <div class="status"><span>9:41</span><span>T9901</span></div>
+        <div class="nav">
+          <button class="back" onclick="go('p-list')">‹</button>
+          <div class="title">学生详情</div>
+        </div>
+        <div class="body">
+          <div class="card" style="display:flex;gap:14px;align-items:center">
+            <div class="av" id="d-av" style="width:56px;height:56px;font-size:20px">测</div>
+            <div>
+              <div class="n" id="d-name" style="font-size:18px;font-weight:700">测试同学</div>
+              <div class="s" style="color:var(--muted);font-size:12px;margin-top:4px">三年级 2 班 · 淮安实验小学</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="h">基本信息</div>
+            <div class="li"><span>学号：</span>20261001</div>
+            <div class="li"><span>班级码：</span>HA-G3-02</div>
+            <div class="li"><span>记录卡：</span><span id="d-card">1230</span></div>
+            <div class="li"><span>家长授权当量：</span><span id="d-auth">已授权</span></div>
+          </div>
+          <div class="card" id="d-stats">
+            <div class="h">成长数据概览</div>
+            <div class="stats">
+              <div class="stat"><span class="n">12</span><span class="l">知章</span></div>
+              <div class="stat"><span class="n">3</span><span class="l">对章</span></div>
+              <div class="stat"><span class="n">480</span><span class="l">当量 ZZE</span></div>
+            </div>
+          </div>
+          <div class="card" id="d-hidden" style="display:none">
+            <div class="h">成长数据概览</div>
+            <p style="font-size:13px;color:var(--muted);line-height:1.5">家长未授权教师查看当量明细。你仍可查看档案与采集记录卡号。</p>
+          </div>
+          <div class="card">
+            <div class="h">近 7 日盖章</div>
+            <div class="stamp-item">
+              <div>语文 · 正向章<span class="badge" style="margin-left:8px">知</span></div>
+              <span style="color:var(--muted)">10-22</span>
+            </div>
+            <div class="stamp-item">
+              <div>德育 · 知行对章<span class="badge combo" style="margin-left:8px">对</span></div>
+              <span style="color:var(--muted)">10-21</span>
+            </div>
+            <div class="stamp-item">
+              <div>数学 · 行章<span class="badge do" style="margin-left:8px">行</span></div>
+              <span style="color:var(--muted)">10-20</span>
+            </div>
+          </div>
+          <button class="btn" onclick="toast('设计稿·将跳转成长报告')">查看完整报告</button>
+          <button class="btn ghost" onclick="toast('设计稿·未接接口')">为该生补盖章</button>
+        </div>
+      </section>
+
+      <!-- D 空状态 -->
+      <section class="page" id="p-empty">
+        <div class="status"><span>9:41</span><span>T9901</span></div>
+        <div class="nav">
+          <button class="back" onclick="go('p-overview')">‹</button>
+          <div class="title">学生管理</div>
+        </div>
+        <div class="body">
+          <div class="empty">
+            <div class="big">∅</div>
+            <p style="font-weight:600;color:var(--ink);margin-bottom:8px">暂无学生数据</p>
+            <p style="font-size:13px;line-height:1.55;max-width:240px;margin:0 auto">
+              家长添加孩子并完成盖章后，会出现在本班列表。也可让家长填写班级码 HA-G3-02。
+            </p>
+            <button class="btn" style="margin-top:24px;max-width:220px;margin-left:auto;margin-right:auto" onclick="toast('设计稿·复制班级码')">复制班级码</button>
+            <button class="btn ghost" style="max-width:220px;margin-left:auto;margin-right:auto" onclick="go('p-list')">查看示例列表</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <p class="hint">设计稿 · 未接接口。确认后落到 UniApp studentManage / studentDetail。</p>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    function go(id) {
+      document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'))
+      document.getElementById(id).classList.add('active')
+    }
+    function toast(msg) {
+      const el = document.getElementById('toast')
+      el.textContent = msg
+      el.classList.add('show')
+      clearTimeout(window.__t)
+      window.__t = setTimeout(() => el.classList.remove('show'), 1800)
+    }
+    function openDetail(name, av, hidden) {
+      document.getElementById('d-name').textContent = name
+      document.getElementById('d-av').textContent = av
+      document.getElementById('d-auth').textContent = hidden ? '未授权' : '已授权'
+      document.getElementById('d-stats').style.display = hidden ? 'none' : 'block'
+      document.getElementById('d-hidden').style.display = hidden ? 'block' : 'none'
+      go('p-detail')
+    }
+    let filterType = 'all'
+    function setFilter(btn) {
+      document.querySelectorAll('.seg button').forEach((b) => b.classList.remove('on'))
+      btn.classList.add('on')
+      filterType = btn.dataset.f
+      filterList()
+    }
+    function filterList() {
+      const kw = (document.getElementById('kw').value || '').trim()
+      document.querySelectorAll('.stu').forEach((el) => {
+        const name = el.dataset.name || ''
+        const card = el.dataset.card || ''
+        const type = el.dataset.type || ''
+        const matchKw = !kw || name.includes(kw) || card.includes(kw)
+        const matchType =
+          filterType === 'all' ||
+          (filterType === 'active' && type === 'active') ||
+          (filterType === 'hidden' && type === 'hidden')
+        el.style.display = matchKw && matchType ? 'flex' : 'none'
+      })
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "hlxz-admin",
+  "private": true,
+  "version": "0.1.0",
+  "description": "淮来学长总管理后台（静态落地版）",
+  "scripts": {
+    "dev": "npx --yes serve -p 5180 .",
+    "start": "npx --yes serve -p 5180 ."
+  }
+}

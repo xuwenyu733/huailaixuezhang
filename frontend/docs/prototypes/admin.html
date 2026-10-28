@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>淮来学长 · 总管理后台原型</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --blue: #2563eb;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --bg: #f1f5f9;
+      --side: #0f172a;
+      --side2: #1e293b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Noto Sans SC", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      min-height: 100vh;
+    }
+    /* Login */
+    #login {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(ellipse 70% 50% at 20% 10%, rgba(37,99,235,0.2), transparent),
+        linear-gradient(160deg, #0f172a 0%, #1e3a5f 55%, #0f172a 100%);
+      padding: 24px;
+    }
+    #login.hidden { display: none; }
+    .login-card {
+      width: min(400px, 100%);
+      background: #fff;
+      border-radius: 20px;
+      padding: 36px 32px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    }
+    .login-card .brand {
+      font-family: Outfit, sans-serif;
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .login-card .brand span { color: var(--blue); }
+    .login-card .sub {
+      margin: 8px 0 28px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%; padding: 11px 12px; border-radius: 10px;
+      border: 1px solid var(--line); font-size: 14px; font-family: inherit;
+      outline: none;
+    }
+    .field input:focus { border-color: var(--blue); }
+    .login-btn {
+      width: 100%; margin-top: 8px; border: none; border-radius: 10px;
+      background: var(--blue); color: #fff; font-weight: 600;
+      padding: 12px; font-size: 15px; cursor: pointer; font-family: inherit;
+    }
+    .login-note {
+      margin-top: 14px; font-size: 12px; color: #94a3b8; text-align: center;
+    }
+    .back-proto {
+      display: block; margin-top: 16px; text-align: center;
+      font-size: 13px; color: #64748b; text-decoration: none;
+    }
+
+    /* Shell */
+    #app { display: none; min-height: 100vh; }
+    #app.show { display: grid; grid-template-columns: 220px 1fr; }
+    .side {
+      background: var(--side);
+      color: #e2e8f0;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: sticky;
+      top: 0;
+    }
+    .side .logo {
+      font-family: Outfit, sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      padding: 8px 12px 20px;
+      letter-spacing: -0.02em;
+    }
+    .side .logo span { color: #60a5fa; }
+    .side .logo small {
+      display: block; font-size: 11px; font-weight: 500;
+      color: #94a3b8; margin-top: 4px; letter-spacing: 0;
+      font-family: "Noto Sans SC", sans-serif;
+    }
+    .nav-btn {
+      display: block; width: 100%; text-align: left;
+      border: none; background: transparent; color: #94a3b8;
+      padding: 10px 12px; border-radius: 8px; font-size: 13px;
+      font-family: inherit; cursor: pointer; margin-bottom: 2px;
+    }
+    .nav-btn:hover { background: var(--side2); color: #e2e8f0; }
+    .nav-btn.on { background: var(--blue); color: #fff; font-weight: 600; }
+    .side-foot {
+      margin-top: auto; padding: 12px;
+      font-size: 11px; color: #64748b; line-height: 1.5;
+    }
+    .main { display: flex; flex-direction: column; min-width: 0; }
+    .top {
+      height: 56px; background: #fff; border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+    }
+    .top .crumb { font-size: 14px; font-weight: 600; }
+    .top .user { font-size: 13px; color: var(--muted); }
+    .top .user button {
+      margin-left: 12px; border: 1px solid var(--line); background: #fff;
+      border-radius: 8px; padding: 5px 10px; font-size: 12px;
+      cursor: pointer; font-family: inherit;
+    }
+    .content { padding: 24px; flex: 1; }
+    .panel { display: none; }
+    .panel.on { display: block; animation: fade 0.2s ease; }
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: none; }
+    }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 1100px) {
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+      #app.show { grid-template-columns: 200px 1fr; }
+    }
+    .kpi {
+      background: #fff; border-radius: 14px; padding: 18px 16px;
+      border: 1px solid var(--line);
+    }
+    .kpi .l { font-size: 12px; color: var(--muted); }
+    .kpi .n {
+      font-family: Outfit, sans-serif;
+      font-size: 1.75rem; font-weight: 700; margin-top: 6px; color: var(--ink);
+    }
+    .kpi .d { font-size: 11px; color: #16a34a; margin-top: 4px; }
+    .box {
+      background: #fff; border-radius: 14px; border: 1px solid var(--line);
+      padding: 18px; margin-bottom: 16px;
+    }
+    .box h3 {
+      font-size: 15px; font-weight: 700; margin-bottom: 14px;
+    }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;
+      align-items: center;
+    }
+    .toolbar input, .toolbar select {
+      border: 1px solid var(--line); border-radius: 8px;
+      padding: 8px 10px; font-size: 13px; font-family: inherit;
+      outline: none; background: #fff;
+    }
+    .toolbar input:focus, .toolbar select:focus { border-color: var(--blue); }
+    .btn {
+      border: none; border-radius: 8px; padding: 8px 14px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      font-family: inherit; background: var(--blue); color: #fff;
+    }
+    .btn.ghost {
+      background: #fff; color: var(--ink); border: 1px solid var(--line);
+    }
+    .btn.sm { padding: 4px 10px; font-size: 12px; font-weight: 500; }
+    .btn.danger { background: #fff; color: #be123c; border: 1px solid #fecdd3; }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    th {
+      text-align: left; color: var(--muted); font-weight: 600;
+      padding: 10px 8px; border-bottom: 1px solid var(--line);
+      font-size: 12px;
+    }
+    td {
+      padding: 12px 8px; border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    tr:hover td { background: #f8fafc; }
+    .tag {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 999px;
+    }
+    .tag.on { background: #dcfce7; color: #15803d; }
+    .tag.off { background: #f1f5f9; color: #64748b; }
+    .tag.wait { background: #fef3c7; color: #b45309; }
+    .tag.ok { background: #dbeafe; color: #1d4ed8; }
+    .muted { color: var(--muted); }
+    .toast {
+      position: fixed; right: 24px; bottom: 24px;
+      background: #0f172a; color: #fff; padding: 12px 16px;
+      border-radius: 10px; font-size: 13px; opacity: 0;
+      pointer-events: none; transition: opacity 0.2s; z-index: 50;
+    }
+    .toast.show { opacity: 1; }
+    .seal-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .seal-item {
+      border: 1px solid var(--line); border-radius: 10px; padding: 12px;
+      background: #f8fafc;
+    }
+    .seal-item .name { font-weight: 600; font-size: 13px; }
+    .seal-item .meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <!-- Login -->
+  <div id="login">
+    <div class="login-card">
+      <div class="brand">淮来<span>学长</span></div>
+      <p class="sub">平台总管理后台 · 设计原型</p>
+      <div class="field">
+        <label>账号</label>
+        <input id="u" value="ops@hlxz" />
+      </div>
+      <div class="field">
+        <label>密码</label>
+        <input id="p" type="password" value="demo1234" />
+      </div>
+      <button class="login-btn" onclick="enterApp()">进入后台</button>
+      <p class="login-note">示意登录，任意内容可进 · 未接真实鉴权</p>
+      <a class="back-proto" href="index.html">← 返回原型入口</a>
+    </div>
+  </div>
+
+  <!-- App shell -->
+  <div id="app">
+    <aside class="side">
+      <div class="logo">淮来<span>学长</span><small>管理后台</small></div>
+      <button class="nav-btn on" data-panel="dash" onclick="nav(this)">数据看板</button>
+      <button class="nav-btn" data-panel="schools" onclick="nav(this)">学校管理</button>
+      <button class="nav-btn" data-panel="teachers" onclick="nav(this)">教师账号</button>
+      <button class="nav-btn" data-panel="users" onclick="nav(this)">家长 / 学生</button>
+      <button class="nav-btn" data-panel="orders" onclick="nav(this)">订单与会员</button>
+      <button class="nav-btn" data-panel="seals" onclick="nav(this)">印章与编码</button>
+      <button class="nav-btn" data-panel="sys" onclick="nav(this)">系统设置</button>
+      <div class="side-foot">
+        设计稿 · 未接 PMIS<br />
+        确认后新建 admin/ 对接 hlxz 表
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="top">
+        <div class="crumb" id="crumb">数据看板</div>
+        <div class="user">
+          运营 · ops@hlxz
+          <button onclick="logout()">退出</button>
+          <button onclick="location.href='teacher-students.html'">教师端原型</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <!-- 看板 -->
+        <section class="panel on" id="dash">
+          <div class="kpis">
+            <div class="kpi"><div class="l">接入学校</div><div class="n">12</div><div class="d">本月 +2</div></div>
+            <div class="kpi"><div class="l">活跃教师（30 日）</div><div class="n">86</div><div class="d">盖章 ≥1 次</div></div>
+            <div class="kpi"><div class="l">本月盖章</div><div class="n">4,280</div><div class="d">知章 71% · 对章 12%</div></div>
+            <div class="kpi"><div class="l">会员开通</div><div class="n">319</div><div class="d">待审凭证 5</div></div>
+          </div>
+          <div class="box">
+            <h3>近 7 日动态</h3>
+            <table>
+              <thead><tr><th>时间</th><th>事件</th><th>对象</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td class="muted">10-27 18:20</td><td>支付凭证上传</td><td>家长 139****1111</td><td><span class="tag wait">待审</span></td></tr>
+                <tr><td class="muted">10-27 15:02</td><td>新学校开通</td><td>淮安实验小学（分校）</td><td><span class="tag on">已开通</span></td></tr>
+                <tr><td class="muted">10-26 09:40</td><td>教师印章绑定</td><td>T9901 · 李老师</td><td><span class="tag ok">完成</span></td></tr>
+                <tr><td class="muted">10-25 21:11</td><td>家长注册</td><td>推荐码 HA20260814</td><td><span class="tag on">正常</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 学校 -->
+        <section class="panel" id="schools">
+          <div class="box">
+            <h3>学校管理</h3>
+            <div class="toolbar">
+              <input placeholder="搜索学校名称" style="width:200px" />
+              <select><option>全部状态</option><option>已开通</option><option>已停用</option></select>
+              <button class="btn" onclick="toast('设计稿·新建学校')">+ 开通学校</button>
+            </div>
+            <table>
+              <thead><tr><th>学校</th><th>学校码</th><th>教师数</th><th>学生档案</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>淮安实验小学</td><td>HASCHOOL01</td><td>24</td><td>680</td>
+                  <td><span class="tag on">已开通</span></td>
+                  <td>
+                    <button class="btn ghost sm" onclick="toast('设计稿·查看')">查看</button>
+                    <button class="btn danger sm" onclick="toast('设计稿·停用示意')">停用</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>清江浦区某小学</td><td>HAQJP02</td><td>11</td><td>210</td>
+                  <td><span class="tag on">已开通</span></td>
+                  <td>
+                    <button class="btn ghost sm" onclick="toast('设计稿·查看')">查看</button>
+                    <button class="btn danger sm" onclick="toast('设计稿·停用示意')">停用</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>演示学校（试运行）</td><td>HADEMO</td><td>3</td><td>32</td>
+                  <td><span class="tag off">已停用</span></td>
+                  <td>
+                    <button class="btn ghost sm" onclick="toast('设计稿·重新开通')">开通</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 教师 -->
+        <section class="panel" id="teachers">
+          <div class="box">
+            <h3>教师账号</h3>
+            <div class="toolbar">
+              <select>
+                <option>淮安实验小学</option>
+                <option>清江浦区某小学</option>
+                <option>全部学校</option>
+              </select>
+              <input placeholder="姓名 / 印章号 / 工号" style="width:200px" />
+              <button class="btn ghost" onclick="toast('设计稿·查询')">查询</button>
+              <button class="btn" onclick="toast('设计稿·添加教师')">+ 添加教师</button>
+            </div>
+            <table>
+              <thead><tr><th>姓名</th><th>印章编号</th><th>工号</th><th>班级/科目</th><th>学校</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>李老师</td><td>T9901</td><td>G202401</td><td>三年级 2 班 · 语文</td><td>淮安实验小学</td>
+                  <td>
+                    <button class="btn ghost sm" onclick="toast('设计稿·重置密码 → 初始密码')">重置密码</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>王老师</td><td>T0311</td><td>G202418</td><td>三年级 2 班 · 数学</td><td>淮安实验小学</td>
+                  <td>
+                    <button class="btn ghost sm" onclick="toast('设计稿·重置密码')">重置密码</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>张老师</td><td>T0203</td><td>G202402</td><td>德育</td><td>淮安实验小学</td>
+                  <td>
+                    <button class="btn ghost sm" onclick="toast('设计稿·重置密码')">重置密码</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 家长/学生 -->
+        <section class="panel" id="users">
+          <div class="box">
+            <h3>家长 / 学生</h3>
+            <div class="toolbar">
+              <input placeholder="手机号 / 推荐码 / 孩子姓名" style="width:240px" />
+              <select><option>全部会员</option><option>试用</option><option>正式</option><option>未开通</option></select>
+              <button class="btn ghost" onclick="toast('设计稿·查询')">查询</button>
+            </div>
+            <table>
+              <thead><tr><th>家长</th><th>手机</th><th>推荐码</th><th>会员</th><th>孩子</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>李晓明</td><td>139****1111</td><td>HAM27462</td>
+                  <td><span class="tag on">正式</span></td>
+                  <td>测试同学 · HA-G3-02</td>
+                  <td><button class="btn ghost sm" onclick="toast('设计稿·查看档案')">档案</button></td>
+                </tr>
+                <tr>
+                  <td>演示家长</td><td>138****8000</td><td>HADEMO01</td>
+                  <td><span class="tag ok">试用</span></td>
+                  <td>赵一凡 · HA-G3-02</td>
+                  <td><button class="btn ghost sm" onclick="toast('设计稿·查看档案')">档案</button></td>
+                </tr>
+                <tr>
+                  <td>新注册</td><td>156****6313</td><td>HA20260814 推荐</td>
+                  <td><span class="tag off">未开通</span></td>
+                  <td>—</td>
+                  <td><button class="btn ghost sm" onclick="toast('设计稿·查看档案')">档案</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 订单会员 -->
+        <section class="panel" id="orders">
+          <div class="box">
+            <h3>凭证审核队列</h3>
+            <p class="muted" style="font-size:12px;margin:-6px 0 14px">对齐小程序「上传支付凭证」流程，人工确认后开通会员。</p>
+            <table>
+              <thead><tr><th>提交时间</th><th>家长</th><th>类型</th><th>金额</th><th>凭证</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="muted">10-27 18:20</td><td>139****1111</td><td>年度会员费</td><td>¥198</td>
+                  <td><button class="btn ghost sm" onclick="toast('设计稿·预览图片')">查看图</button></td>
+                  <td>
+                    <button class="btn sm" onclick="toast('设计稿·审核通过')">通过</button>
+                    <button class="btn danger sm" onclick="toast('设计稿·驳回')">驳回</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="muted">10-26 11:05</td><td>138****8000</td><td>成长记录册</td><td>¥38</td>
+                  <td><button class="btn ghost sm" onclick="toast('设计稿·预览图片')">查看图</button></td>
+                  <td>
+                    <button class="btn sm" onclick="toast('设计稿·审核通过')">通过</button>
+                    <button class="btn danger sm" onclick="toast('设计稿·驳回')">驳回</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="box">
+            <h3>近期订单</h3>
+            <table>
+              <thead><tr><th>订单号</th><th>标题</th><th>状态</th><th>时间</th></tr></thead>
+              <tbody>
+                <tr><td>HLXZ-20261022-01</td><td>年度会员费</td><td><span class="tag on">已确认</span></td><td class="muted">10-22</td></tr>
+                <tr><td>HLXZ-20261020-08</td><td>光敏印油</td><td><span class="tag wait">待审</span></td><td class="muted">10-20</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 印章编码 -->
+        <section class="panel" id="seals">
+          <div class="box">
+            <h3>盖法与当量（只读示意）</h3>
+            <p class="muted" style="font-size:12px;margin:-6px 0 14px">对齐小程序 sealMethods · 1ZE=10ZZE · 1XE=100ZZE · 1DE=500ZZE</p>
+            <div class="seal-grid">
+              <div class="seal-item"><div class="name">正向章（知章）</div><div class="meta">蓝方 · ZE=1 · 计分</div></div>
+              <div class="seal-item"><div class="name">引导章</div><div class="meta">不计分 · 过程引导</div></div>
+              <div class="seal-item"><div class="name">改进章</div><div class="meta">知章变体 · 弱当量</div></div>
+              <div class="seal-item"><div class="name">行章</div><div class="meta">黄圆 · XE · 成果确认</div></div>
+              <div class="seal-item"><div class="name">知行对章</div><div class="meta">叠盖 · DE · 最高加成</div></div>
+              <div class="seal-item"><div class="name">四角编码</div><div class="meta">方章内侧数字 · 溯源</div></div>
+            </div>
+            <div class="toolbar" style="margin-top:16px">
+              <button class="btn ghost" onclick="toast('设计稿·后续可编辑配置')">编辑配置（未开放）</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 系统 -->
+        <section class="panel" id="sys">
+          <div class="box">
+            <h3>系统设置</h3>
+            <div class="field" style="max-width:360px;margin-bottom:14px">
+              <label style="font-size:12px;font-weight:600;color:var(--muted)">客服电话</label>
+              <input value="4008002026" style="width:100%;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit" />
+            </div>
+            <div class="field" style="max-width:520px;margin-bottom:14px">
+              <label style="font-size:12px;font-weight:600;color:var(--muted)">首页公告</label>
+              <input value="本学期成长记录册已开放订购，会员可导出完整报告。" style="width:100%;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit" />
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin:16px 0;font-size:13px">
+              <input type="checkbox" id="demo" checked />
+              <label for="demo">允许小程序「家长演示 / 学校演示」入口</label>
+            </div>
+            <button class="btn" onclick="toast('设计稿·保存设置')">保存</button>
+          </div>
+          <div class="box">
+            <h3>说明</h3>
+            <p class="muted" style="font-size:13px;line-height:1.7">
+              本页为桌面 Web 总后台设计原型，不替代微信小程序内的学校「教师管理」。
+              正式开发建议新建 <code>admin/</code> 项目，登录独立于家长/教师会话，读写同一套
+              <code>test_table_hlxz_*</code> 表。
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const titles = {
+      dash: '数据看板',
+      schools: '学校管理',
+      teachers: '教师账号',
+      users: '家长 / 学生',
+      orders: '订单与会员',
+      seals: '印章与编码',
+      sys: '系统设置',
+    }
+    function enterApp() {
+      document.getElementById('login').classList.add('hidden')
+      document.getElementById('app').classList.add('show')
+    }
+    function logout() {
+      document.getElementById('app').classList.remove('show')
+      document.getElementById('login').classList.remove('hidden')
+    }
+    function nav(btn) {
+      document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('on'))
+      btn.classList.add('on')
+      const id = btn.dataset.panel
+      document.querySelectorAll('.panel').forEach((p) => p.classList.remove('on'))
+      document.getElementById(id).classList.add('on')
+      document.getElementById('crumb').textContent = titles[id] || id
+    }
+    function toast(msg) {
+      const el = document.getElementById('toast')
+      el.textContent = msg
+      el.classList.add('show')
+      clearTimeout(window.__t)
+      window.__t = setTimeout(() => el.classList.remove('show'), 1800)
+    }
+  </script>
+</body>
+</html>

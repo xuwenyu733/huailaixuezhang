@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>印章叠盖识别 · 设计演示</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a2744;
+      --paper: #f7f3ea;
+      --paper-deep: #ebe4d4;
+      --blue: #1e4a9c;
+      --yellow: #d4a017;
+      --line: #c8bfa8;
+      --accent: #b5451b;
+      --ok: #2d6a4f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "DM Sans", "Noto Serif SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 10% 0%, #fff8e8 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 90% 20%, #e8eef8 0%, transparent 50%),
+        var(--paper);
+      min-height: 100vh;
+    }
+    header {
+      padding: 2.5rem 1.5rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    header h1 {
+      font-family: "Noto Serif SC", serif;
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      margin: 0 0 0.5rem;
+      letter-spacing: 0.04em;
+    }
+    header p {
+      margin: 0;
+      max-width: 42rem;
+      line-height: 1.6;
+      opacity: 0.85;
+    }
+    .badge {
+      display: inline-block;
+      margin-top: 0.9rem;
+      padding: 0.25rem 0.7rem;
+      border: 1px solid var(--ok);
+      color: var(--ok);
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+    }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+      display: grid;
+      gap: 1.5rem;
+    }
+    .panel {
+      border-top: 1px solid var(--line);
+      padding-top: 1.25rem;
+    }
+    .panel h2 {
+      font-family: "Noto Serif SC", serif;
+      font-size: 1.15rem;
+      margin: 0 0 0.75rem;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      align-items: end;
+      margin-bottom: 1rem;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+    }
+    select, input[type="number"] {
+      font: inherit;
+      padding: 0.45rem 0.6rem;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      min-width: 8rem;
+    }
+    button {
+      font: inherit;
+      padding: 0.55rem 1.1rem;
+      border: none;
+      background: var(--ink);
+      color: #fff;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+    }
+    button.secondary {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+    }
+    .stage-wrap {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 800px) {
+      .stage-wrap { grid-template-columns: 1fr; }
+    }
+    .canvas-box {
+      background: #fff;
+      border: 1px solid var(--line);
+      aspect-ratio: 1.15;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+    .result {
+      background: linear-gradient(160deg, #fff 0%, var(--paper-deep) 100%);
+      border: 1px solid var(--line);
+      padding: 1rem 1.1rem;
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+    .result h3 {
+      margin: 0 0 0.6rem;
+      font-family: "Noto Serif SC", serif;
+      font-size: 1rem;
+    }
+    .result dl {
+      margin: 0;
+      display: grid;
+      grid-template-columns: 5.5rem 1fr;
+      gap: 0.35rem 0.5rem;
+    }
+    .result dt { opacity: 0.6; }
+    .result dd { margin: 0; font-weight: 600; }
+    .corners {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.9rem;
+    }
+    .corner-cell {
+      border: 1px dashed var(--line);
+      padding: 0.45rem 0.55rem;
+      font-size: 0.85rem;
+    }
+    .corner-cell strong { color: var(--accent); }
+    .grid-methods {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+    .thumb {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 0.4rem;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .thumb:hover, .thumb.active {
+      border-color: var(--blue);
+      transform: translateY(-2px);
+    }
+    .thumb canvas { width: 100%; aspect-ratio: 1; height: auto; }
+    .thumb span {
+      display: block;
+      margin-top: 0.3rem;
+      font-size: 0.72rem;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.5rem;
+    }
+    @media (max-width: 800px) {
+      .pipeline { grid-template-columns: 1fr 1fr; }
+    }
+    .step {
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 0.7rem;
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+    .step b {
+      display: block;
+      margin-bottom: 0.25rem;
+      color: var(--blue);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+    }
+    footer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 2.5rem;
+      font-size: 0.8rem;
+      opacity: 0.65;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>印章叠盖识别 · 设计演示</h1>
+    <p>两种章（蓝方知章 / 黄圆行章），11 种叠盖盖法，方章外轮廓四角填写数字。下方可切换盖法并模拟识别输出。</p>
+    <span class="badge">结论：可以实现</span>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>识别流水线</h2>
+      <div class="pipeline">
+        <div class="step"><b>01 裁格</b>定位「盖章处」单元格，去掉表格线</div>
+        <div class="step"><b>02 分色</b>HSV 分离蓝方章 / 黄圆章</div>
+        <div class="step"><b>03 形状</b>方≈矩形轮廓，圆≈圆形轮廓，聚类成组</div>
+        <div class="step"><b>04 盖法</b>按章数+相对位姿匹配 1–11 号盖法</div>
+        <div class="step"><b>05 数字</b>组外接矩形四角外侧 ROI → 手写 OCR</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>盖法生成 + 四角数字</h2>
+      <div class="controls">
+        <label>盖法
+          <select id="methodSelect"></select>
+        </label>
+        <label>左上
+          <input type="number" id="dTL" min="0" max="9" value="1" />
+        </label>
+        <label>右上
+          <input type="number" id="dTR" min="0" max="9" value="3" />
+        </label>
+        <label>左下
+          <input type="number" id="dBL" min="0" max="9" value="2" />
+        </label>
+        <label>右下
+          <input type="number" id="dBR" min="0" max="9" value="" placeholder="空" />
+        </label>
+        <button id="btnRender">生成示意</button>
+        <button class="secondary" id="btnRandom">随机数字</button>
+      </div>
+      <div class="stage-wrap">
+        <div class="canvas-box">
+          <canvas id="stage" width="560" height="480"></canvas>
+        </div>
+        <div class="result" id="resultBox">
+          <h3>模拟识别结果</h3>
+          <dl id="resultDl"></dl>
+          <div class="corners" id="resultCorners"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>全部盖法一览（点击切换）</h2>
+      <div class="grid-methods" id="thumbs"></div>
+    </section>
+  </main>
+
+  <footer>
+    数字写在方章内侧四角（斜线旁）；叠盖时取整组外接矩形的内角。纯行章无四角数字。
+  </footer>
+
+  <script src="src/demo.js"></script>
+</body>
+</html>

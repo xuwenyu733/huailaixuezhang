@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 报告导出 · 全部评价</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{--blue:#2563eb;--ink:#111827;--muted:#6b7280;--bg:#f3f4f6;--line:#e5e7eb}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;font-family:"Noto Sans SC",sans-serif;background:#0f172a;color:var(--ink);display:flex;flex-direction:column;align-items:center;padding:28px 12px 48px;gap:14px}
+    .bar{width:min(400px,100%);display:flex;justify-content:space-between;color:#94a3b8;font-size:.85rem}
+    .bar a{color:#93c5fd;text-decoration:none}
+    .phone{width:390px;max-width:100%;height:844px;border-radius:36px;background:#111;padding:10px;box-shadow:0 28px 70px rgba(0,0,0,.45)}
+    .screen{height:100%;border-radius:28px;overflow:hidden;background:var(--bg);position:relative}
+    .page{display:none;flex-direction:column;position:absolute;inset:0}
+    .page.on{display:flex}
+    .nav{background:#fff;border-bottom:1px solid var(--line);padding:44px 14px 12px;display:flex;align-items:center;gap:8px}
+    .nav button{border:0;background:#f3f4f6;width:32px;height:32px;border-radius:10px;cursor:pointer}
+    .nav h1{flex:1;font-size:17px;font-weight:700}
+    .export{color:var(--blue);font-size:14px;font-weight:600;cursor:pointer}
+    .body{flex:1;overflow:auto;padding:12px}
+    .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px}
+    .seg{display:flex;gap:6px;margin-bottom:10px}
+    .seg button{flex:1;border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px;font:inherit;font-size:12px;cursor:pointer}
+    .seg button.on{border-color:var(--blue);background:#eff6ff;color:var(--blue);font-weight:600}
+    .chart{height:120px;border-radius:12px;background:linear-gradient(180deg,#eff6ff,#fff);border:1px dashed #bfdbfe;display:flex;align-items:flex-end;justify-content:space-around;padding:16px 12px 8px}
+    .chart i{display:block;width:18%;background:#2563eb;border-radius:6px 6px 0 0;opacity:.85}
+    .row{display:flex;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #f3f4f6}
+    .ico{width:36px;height:36px;border-radius:10px;background:#dbeafe;color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+    .meta{flex:1;min-width:0}
+    .meta .t{font-size:14px;font-weight:600}
+    .meta .s{font-size:11px;color:var(--muted);margin-top:2px}
+    .zze{font-family:Outfit,sans-serif;font-weight:700;color:var(--blue)}
+    .all{display:block;text-align:center;color:var(--blue);font-size:13px;font-weight:600;padding:8px;cursor:pointer}
+    .mask{position:absolute;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:5;padding:24px}
+    .mask.on{display:flex}
+    .dlg{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:300px}
+    .dlg h3{font-size:16px;margin-bottom:8px}
+    .dlg p{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px}
+    .btn{width:100%;border:0;border-radius:10px;background:var(--blue);color:#fff;height:44px;font:inherit;font-weight:600;cursor:pointer}
+    .btn.ghost{background:#f3f4f6;color:var(--ink);margin-top:8px}
+    .toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;z-index:9}
+    .toast.on{opacity:1}
+    .hint{color:#64748b;font-size:.78rem;text-align:center;max-width:390px}
+    .pdf{border:1px solid var(--line);border-radius:8px;padding:12px;font-size:12px;background:#f8fafc;margin:10px 0}
+  </style>
+</head>
+<body>
+  <div class="bar"><a href="parent-02-virtual-stamp.html">← 上一项</a><span>03 / 05</span><a href="parent-04-haitang.html">下一项 →</a></div>
+  <div class="phone"><div class="screen">
+    <!-- 报告 -->
+    <section class="page on" id="report">
+      <div class="nav">
+        <button onclick="location.href='parent-index.html'">‹</button>
+        <h1>成长报告</h1>
+        <span class="export" onclick="openExport()">导出</span>
+      </div>
+      <div class="body">
+        <div class="seg">
+          <button class="on">月度</button>
+          <button>学期</button>
+          <button>维度</button>
+        </div>
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:8px">阴阳双螺旋（示意）</div>
+          <div class="chart"><i style="height:40%"></i><i style="height:55%"></i><i style="height:48%"></i><i style="height:70%"></i><i style="height:85%"></i></div>
+        </div>
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:4px">最近评价</div>
+          <div class="row"><div class="ico">知</div><div class="meta"><div class="t">语文 · 正向章</div><div class="s">家长 · 今天 16:20</div></div><div class="zze">+10</div></div>
+          <div class="row"><div class="ico">对</div><div class="meta"><div class="t">德育 · 知行对章</div><div class="s">教师 T9901 · 昨天</div></div><div class="zze">+500</div></div>
+          <div class="row"><div class="ico">行</div><div class="meta"><div class="t">体育 · 行章</div><div class="s">家长 · 10-25</div></div><div class="zze">+100</div></div>
+          <span class="all" onclick="go('list')">查看全部评价 →</span>
+        </div>
+      </div>
+      <div class="mask" id="exp">
+        <div class="dlg">
+          <h3>导出 PDF 报告</h3>
+          <p>会员可导出完整 PDF（螺旋图 + 雷达 + 融合分析 + 排名）。试用期示意也可生成预览。</p>
+          <div class="pdf">淮来学长_测试同学_2026-10月报.pdf<br/>约 1.2 MB · 含图表矢量页</div>
+          <button class="btn" onclick="doExport()">生成并保存</button>
+          <button class="btn ghost" onclick="closeExport()">取消</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 全部评价 -->
+    <section class="page" id="list">
+      <div class="nav">
+        <button onclick="go('report')">‹</button>
+        <h1>全部评价</h1>
+      </div>
+      <div class="body">
+        <div class="seg">
+          <button class="on">全部</button>
+          <button>知章</button>
+          <button>行章</button>
+          <button>对章</button>
+        </div>
+        <div class="card">
+          <div class="row"><div class="ico">知</div><div class="meta"><div class="t">语文 · 正向章</div><div class="s">编码 1230 · 今天</div></div><div class="zze">+10</div></div>
+          <div class="row"><div class="ico">对</div><div class="meta"><div class="t">德育 · 知行对章</div><div class="s">教师 · 昨天</div></div><div class="zze">+500</div></div>
+          <div class="row"><div class="ico">行</div><div class="meta"><div class="t">体育 · 行章</div><div class="s">家长 · 10-25</div></div><div class="zze">+100</div></div>
+          <div class="row"><div class="ico">知</div><div class="meta"><div class="t">习惯 · 改进章</div><div class="s">家长 · 10-24</div></div><div class="zze">+20</div></div>
+          <div class="row"><div class="ico">知</div><div class="meta"><div class="t">劳动 · 正向章</div><div class="s">家长 · 10-23</div></div><div class="zze">+10</div></div>
+          <div class="row"><div class="ico">知</div><div class="meta"><div class="t">引导章</div><div class="s">不计分 · 10-22</div></div><div class="zze" style="color:#9ca3af">0</div></div>
+        </div>
+      </div>
+    </section>
+  </div></div>
+  <p class="hint">对应 4.2.4 / 4.4.1 导出 · 落地 report.vue + 评价列表页</p>
+  <div class="toast" id="toast"></div>
+  <script>
+    function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));document.getElementById(id).classList.add('on')}
+    function openExport(){document.getElementById('exp').classList.add('on')}
+    function closeExport(){document.getElementById('exp').classList.remove('on')}
+    function doExport(){closeExport();toast('设计稿·PDF 已生成（未接真实导出）')}
+    function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(window.__t);window.__t=setTimeout(()=>t.classList.remove('on'),1600)}
+  </script>
+</body>
+</html>

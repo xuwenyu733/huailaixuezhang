@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>淮来学长 · 设计原型入口</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Outfit:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --blue: #2563eb;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --bg: #e8eef7;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: "Noto Sans SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 10% 0%, rgba(37, 99, 235, 0.18), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 90% 100%, rgba(14, 165, 233, 0.12), transparent 50%),
+        linear-gradient(165deg, #dbe4f5 0%, #eef2f7 45%, #f4f6fa 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+    }
+    .wrap {
+      width: min(880px, 100%);
+    }
+    .brand {
+      font-family: Outfit, "Noto Sans SC", sans-serif;
+      font-size: clamp(2.4rem, 5vw, 3.4rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      line-height: 1.1;
+    }
+    .brand span { color: var(--blue); }
+    .lead {
+      margin-top: 12px;
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 36em;
+      line-height: 1.6;
+    }
+    .note {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+    .grid {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    a.card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: var(--card);
+      border-radius: 20px;
+      padding: 28px 26px 30px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.06);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    a.card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 4px;
+      background: var(--blue);
+    }
+    a.card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 48px rgba(37, 99, 235, 0.14);
+    }
+    .tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 12px;
+    }
+    a.card h2 {
+      font-family: Outfit, "Noto Sans SC", sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    a.card p {
+      font-size: 0.92rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .go {
+      margin-top: 22px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--blue);
+    }
+    footer {
+      margin-top: 36px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 class="brand">淮来<span>学长</span></h1>
+    <p class="lead">设计原型入口。本轮仅展示信息结构与交互示意，未接 PMIS、不改小程序代码。</p>
+    <p class="note">假数据口径：淮安实验小学 · 教师 T9901 · 班级码 HA-G3-02</p>
+
+    <div class="grid">
+      <a class="card" href="parent-index.html">
+        <div class="tag">Mini Program · Parent · 1→5</div>
+        <h2>家长端 · 缺口原型</h2>
+        <p>验证码与孩子编辑、11 盖法、报告导出与全部评价、海棠周表、激励目标与 PIN。</p>
+        <span class="go">打开原型 →</span>
+      </a>
+      <a class="card" href="teacher-students.html">
+        <div class="tag">Mini Program · Phone</div>
+        <h2>教师端 · 学生管理</h2>
+        <p>班级概览、学生列表与筛选、学生详情、空状态。手机框多屏可点切换。</p>
+        <span class="go">打开原型 →</span>
+      </a>
+      <a class="card" href="admin.html">
+        <div class="tag">Web · Desktop</div>
+        <h2>总管理后台</h2>
+        <p>数据看板、学校 / 教师 / 家长学生、订单会员、印章编码、系统设置。侧栏切换。</p>
+        <span class="go">打开原型 →</span>
+      </a>
+    </div>
+
+    <footer>
+      教师端已落到 UniApp；总后台见 <code>admin/</code>；家长端本批为 HTML 原型，确认后再逐项落地。
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 海棠成长树</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{--blue:#2563eb;--amber:#f59e0b;--ink:#111827;--muted:#6b7280;--bg:#f3f4f6;--line:#e5e7eb}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;font-family:"Noto Sans SC",sans-serif;background:#0f172a;color:var(--ink);display:flex;flex-direction:column;align-items:center;padding:28px 12px 48px;gap:14px}
+    .bar{width:min(400px,100%);display:flex;justify-content:space-between;color:#94a3b8;font-size:.85rem}
+    .bar a{color:#93c5fd;text-decoration:none}
+    .phone{width:390px;max-width:100%;height:844px;border-radius:36px;background:#111;padding:10px;box-shadow:0 28px 70px rgba(0,0,0,.45)}
+    .screen{height:100%;border-radius:28px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
+    .nav{background:#fff;border-bottom:1px solid var(--line);padding:44px 14px 12px;display:flex;align-items:center;gap:8px}
+    .nav button{border:0;background:#f3f4f6;width:32px;height:32px;border-radius:10px;cursor:pointer}
+    .nav h1{flex:1;font-size:16px;font-weight:700}
+    .body{flex:1;overflow:auto;padding:12px}
+    .card{background:#fff;border-radius:14px;padding:12px;margin-bottom:10px}
+    .meta{font-size:12px;color:var(--muted);line-height:1.5}
+    .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:10px}
+    table{border-collapse:collapse;font-size:11px;min-width:520px}
+    th,td{border:1px solid var(--line);padding:6px 4px;text-align:center;min-width:44px}
+    th{background:#f8fafc;color:var(--muted);font-weight:600}
+    td.dim{text-align:left;padding-left:8px;font-weight:600;color:var(--ink);background:#fafafa;min-width:64px}
+    .cell{width:28px;height:28px;margin:0 auto;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+    .k{background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd}
+    .d{background:#fef3c7;color:#b45309;border-radius:50%;border:1px solid #fcd34d}
+    .c{background:#d1fae5;color:#047857;border:1px solid #6ee7b7}
+    .y{background:#f3f4f6;color:#9ca3af;transform:rotate(180deg);border:1px solid #d1d5db}
+    .empty{background:#fff;border:1px dashed #e5e7eb;color:transparent}
+    .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:11px;color:var(--muted)}
+    .legend span{display:inline-flex;align-items:center;gap:4px}
+    .hint{color:#64748b;font-size:.78rem;text-align:center;max-width:390px}
+    .toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;z-index:9}
+    .toast.on{opacity:1}
+  </style>
+</head>
+<body>
+  <div class="bar"><a href="parent-03-report-records.html">← 上一项</a><span>04 / 05</span><a href="parent-05-incentive.html">下一项 →</a></div>
+  <div class="phone"><div class="screen">
+    <div class="nav">
+      <button onclick="location.href='parent-index.html'">‹</button>
+      <h1>海棠成长树</h1>
+      <span style="font-size:12px;color:var(--blue)" onclick="toast('设计稿·切换学期')">2026秋</span>
+    </div>
+    <div class="body">
+      <div class="card">
+        <div style="font-weight:700">测试同学 · 三年级 2 班</div>
+        <div class="meta">一张表记录一个孩子一学期 · 每列为一周 · 家长/孩子按学段规则盖章</div>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>维度</th>
+                <th>W1</th><th>W2</th><th>W3</th><th>W4</th><th>W5</th><th>W6</th><th>W7</th><th>W8</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="dim">智育</td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell d">行</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell empty">·</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell y">引</div></td>
+                <td><div class="cell empty">·</div></td>
+              </tr>
+              <tr>
+                <td class="dim">德育</td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell empty">·</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell c">对</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell empty">·</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell empty">·</div></td>
+              </tr>
+              <tr>
+                <td class="dim">体育</td>
+                <td><div class="cell empty">·</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell empty">·</div></td>
+                <td><div class="cell d">行</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell empty">·</div></td>
+                <td><div class="cell empty">·</div></td>
+              </tr>
+              <tr>
+                <td class="dim">劳动</td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell empty">·</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell empty">·</div></td>
+                <td><div class="cell empty">·</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell empty">·</div></td>
+              </tr>
+              <tr>
+                <td class="dim">习惯</td>
+                <td><div class="cell y">引</div></td>
+                <td><div class="cell k">改</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell empty">·</div></td>
+                <td><div class="cell k">知</div></td>
+                <td><div class="cell empty">·</div></td>
+                <td><div class="cell empty">·</div></td>
+                <td><div class="cell empty">·</div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="legend">
+          <span><i class="cell k" style="width:16px;height:16px;display:inline-flex">知</i> 知章</span>
+          <span><i class="cell d" style="width:16px;height:16px;display:inline-flex">行</i> 行章</span>
+          <span><i class="cell c" style="width:16px;height:16px;display:inline-flex">对</i> 对章</span>
+          <span><i class="cell y" style="width:16px;height:16px;display:inline-flex">引</i> 引导</span>
+        </div>
+      </div>
+      <div class="card" style="font-size:12px;color:var(--muted);line-height:1.55">
+        <b style="color:var(--ink)">学段规则（示意）</b><br/>
+        低年级：家长全权盖章。<br/>
+        三年级起：学生可盖蓝章自评，家长黄章认证并可收回。<br/>
+        点击单元格 → 设计稿将进入虚拟盖章或拍照采集。
+        <div style="margin-top:10px">
+          <button onclick="toast('设计稿·跳转虚拟盖章')" style="border:0;background:var(--blue);color:#fff;border-radius:10px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer">本周补盖</button>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <p class="hint">对应 4.5.1 家庭端编码表 · 落地增强 code.vue / 新页 haitang</p>
+  <div class="toast" id="toast"></div>
+  <script>
+    function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(window.__t);window.__t=setTimeout(()=>t.classList.remove('on'),1600)}
+  </script>
+</body>
+</html>

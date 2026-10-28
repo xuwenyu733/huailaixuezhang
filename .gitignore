@@ -1,0 +1,30 @@
+# dependencies & build
+node_modules/
+dist/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.Python
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# logs & OS / editor
+logs/
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# backend outputs
+backend/output/
+backend/*.jpg
+*.local

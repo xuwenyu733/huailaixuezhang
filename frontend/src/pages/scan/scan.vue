@@ -48,6 +48,9 @@
         <text v-if="result.methodName">知章×{{ result.zhiCount || 0 }} · 行章×{{ result.xingCount || 0 }}</text>
         <text class="blue">本次当量：{{ result.valueText }}（{{ engineLabel }}）</text>
       </view>
+      <view v-if="result.notices.length" class="tips">
+        <text v-for="(t, i) in result.notices" :key="i" class="tip">· {{ t }}</text>
+      </view>
       <view class="edit" v-else>
         <input class="inp" v-model="result.subject" placeholder="学科" />
         <input class="inp" v-model="result.primaryDim" placeholder="一级维度" />
@@ -86,6 +89,7 @@ import { pushMessage } from '@/services/messageRepo'
 import { DEEPSEEK_OCR } from '@/config/deepseek'
 import { SEAL_API } from '@/config/sealApi'
 import { hasTencentOcrConfig, recognizeStampImage } from '@/services/ocr'
+import { checkSealApiHealth, hasSealApiConfig } from '@/services/sealRecognize'
 import { saveStamp } from '@/services/stampRepo'
 import type { ChildRow } from '@/types/user'
 
@@ -98,14 +102,18 @@ const ownerId = ref('')
 const role = ref('parent')
 const cardInput = ref('')
 const recognizing = ref(false)
+const serviceStatus = ref<'unknown' | 'ok' | 'down'>('unknown')
+const serviceDetail = ref('')
 
 const isTeacher = computed(() => role.value === 'teacher')
 const ocrHint = computed(() => {
+  if (SEAL_API.baseUrl) {
+    if (serviceStatus.value === 'ok') return serviceDetail.value
+    if (serviceStatus.value === 'down') return `${serviceDetail.value}`
+    return '正在检测印章识别服务…'
+  }
   if (DEEPSEEK_OCR.secretKey) {
     return '已配置 DeepSeek 视觉识别（11 种盖法），相册/快门将走真实识别'
-  }
-  if (SEAL_API.baseUrl) {
-    return '已对接印章识别服务。请先在 backend 目录启动 python app.py'
   }
   if (hasTencentOcrConfig()) {
     return '已配置腾讯云印章识别，相册/快门将走真实识别'
@@ -137,6 +145,7 @@ const result = reactive({
   zhiCount: 0,
   xingCount: 0,
   stampType: 'know' as 'know' | 'do' | 'combo',
+  notices: [] as string[],
 })
 
 const childAvatar = computed(
@@ -148,6 +157,7 @@ const childName = computed(() =>
 const childCard = computed(() => child.value?.card_no || '—')
 
 onShow(async () => {
+  probeService()
   const user = requireLogin()
   if (!user) return
   ownerId.value = user.id
@@ -167,6 +177,13 @@ onShow(async () => {
     }
   }
 })
+
+async function probeService() {
+  if (!hasSealApiConfig()) return
+  const r = await checkSealApiHealth()
+  serviceStatus.value = r.ok ? 'ok' : 'down'
+  serviceDetail.value = r.detail
+}
 
 function stampNow() {
   const now = new Date()
@@ -194,12 +211,18 @@ async function applyOcr(filePath: string) {
     result.zhiCount = ocr.zhiCount || 0
     result.xingCount = ocr.xingCount || 0
     result.stampType = ocr.stampType || 'know'
+    result.notices = ocr.notices || []
     result.note = ''
     editing.value = false
     stampNow()
     showResult.value = true
   } catch (e: any) {
-    uni.showToast({ title: e.message || '识别失败', icon: 'none' })
+    const msg = String(e?.message || '识别失败')
+    // 上游余额/密钥问题给一句人话，别把英文原文糊到教师脸上
+    const friendly = /402|Insufficient Balance|401|403|余额/i.test(msg)
+      ? '识别服务额度不足或密钥失效，请联系管理员'
+      : msg
+    uni.showToast({ title: friendly, icon: 'none' })
   } finally {
     recognizing.value = false
   }
@@ -399,6 +422,13 @@ async function onConfirm() {
 .rs { display: block; margin-top: 6rpx; font-size: 22rpx; color: #6b7280; }
 .kv text { display: block; font-size: 24rpx; color: #374151; line-height: 1.8; }
 .kv .blue { color: #2563eb; font-weight: 600; }
+.tips {
+  margin-top: 14rpx; padding: 14rpx 16rpx; background: #fffbeb;
+  border-radius: 12rpx; border-left: 4rpx solid #f59e0b;
+}
+.tip {
+  display: block; font-size: 22rpx; color: #92400e; line-height: 1.6;
+}
 .edit .inp {
   height: 76rpx; background: #f9fafb; border: 2rpx solid #e5e7eb; border-radius: 12rpx;
   padding: 0 20rpx; margin-bottom: 12rpx; font-size: 26rpx;

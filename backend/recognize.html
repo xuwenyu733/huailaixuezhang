@@ -155,6 +155,33 @@
     }
     .stat b { display: block; font-size: 1.2rem; color: var(--blue); }
     .stat span { font-size: 0.75rem; opacity: 0.65; }
+    .methods {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 0.8rem;
+    }
+    .methods .chip {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.78rem;
+    }
+    .methods .chip b { color: var(--blue); }
+    .warn {
+      border-left: 3px solid #d98524;
+      background: #fff7ec;
+      padding: 0.45rem 0.6rem;
+      font-size: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    .edit-note {
+      border-left: 3px solid var(--accent);
+      background: #fdf7f3;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
     .list {
       display: grid;
       gap: 0.55rem;
@@ -168,6 +195,19 @@
       font-size: 0.88rem;
       line-height: 1.45;
     }
+    .card .top { display: flex; gap: 0.7rem; align-items: flex-start; }
+    .card .body { flex: 1; min-width: 0; }
+    .card .thumb {
+      width: 104px;
+      height: 104px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #fff;
+      flex: none;
+      cursor: zoom-in;
+    }
+    .card.edited { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
     .card .title {
       font-family: "Noto Serif SC", serif;
       font-weight: 700;
@@ -180,12 +220,58 @@
       gap: 0.3rem;
       margin-top: 0.45rem;
     }
-    .digits div {
+    .digits label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
       border: 1px dashed var(--line);
-      padding: 0.25rem 0.4rem;
+      padding: 0.15rem 0.4rem;
       font-size: 0.8rem;
     }
-    .digits strong { color: var(--accent); }
+    .digits input {
+      width: 2.6rem;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      background: #fff;
+      font: inherit;
+      font-weight: 700;
+      color: var(--accent);
+      text-align: center;
+      padding: 0.05rem 0.1rem;
+    }
+    .digits input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+    .digits input.changed { background: #fff3e0; }
+    .digits .nodigits {
+      grid-column: 1 / -1;
+      border: 1px dashed var(--line);
+      padding: 0.4rem 0.5rem;
+      font-size: 0.8rem;
+      color: #7a8396;
+      background: repeating-linear-gradient(135deg, #fbfbfc, #fbfbfc 6px, #f4f5f7 6px, #f4f5f7 12px);
+    }
+    .zoomline {
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-top: 0.45rem; font-size: 0.78rem; opacity: 0.8;
+    }
+    .zoomline img { width: 74px; height: 74px; object-fit: cover; cursor: zoom-in;
+      border: 1px solid var(--line); border-radius: 4px; }
+    .fixnote { font-size: 0.78rem; color: #2f6fed; margin-top: 0.3rem; }
+    .review {
+      font-size: 0.78rem; color: #9a6700; background: #fff8e6;
+      border-left: 3px solid #d9a441; padding: 0.25rem 0.45rem; margin-top: 0.35rem;
+    }
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 22, 26, 0.82);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      cursor: zoom-out;
+    }
+    .lightbox.on { display: flex; }
+    .lightbox img { max-width: 86vw; max-height: 86vh; border-radius: 6px; background: #fff; }
   </style>
 </head>
 <body>
@@ -204,14 +290,6 @@
       <div class="actions" style="align-items:center">
         <button type="button" id="btnPick">选择图片</button>
         <button type="button" class="secondary" id="btnSample">用样页试跑</button>
-        <label style="font-size:0.85rem;opacity:.85;display:flex;align-items:center;gap:.35rem;cursor:pointer">
-          <input type="radio" name="engine" value="deepseek" id="engDeepseek" checked />
-          DeepSeek
-        </label>
-        <label style="font-size:0.85rem;opacity:.85;display:flex;align-items:center;gap:.35rem;cursor:pointer">
-          <input type="radio" name="engine" value="local" id="engLocal" />
-          本地
-        </label>
       </div>
       <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/bmp" />
     </section>
@@ -233,12 +311,16 @@
           <div class="stat"><b id="sZhi">0</b><span>知章合计</span></div>
           <div class="stat"><b id="sXing">0</b><span>行章合计</span></div>
         </div>
+        <div class="methods" id="methods" hidden></div>
+        <div class="warn" id="warn" hidden></div>
+        <div class="edit-note" id="editNote" hidden></div>
         <div class="list" id="list">
           <div class="placeholder" style="opacity:.5;padding:.5rem 0">尚无结果</div>
         </div>
       </section>
     </div>
   </main>
+  <div class="lightbox" id="lightbox"><img alt=""></div>
 
   <script>
     const dropZone = document.getElementById("dropZone");
@@ -253,6 +335,12 @@
       statusEl.className = "status" + (kind ? " " + kind : "");
     }
 
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      }[c]));
+    }
+
     function renderResult(data) {
       const s = data.summary || {};
       summary.hidden = false;
@@ -261,61 +349,192 @@
       document.getElementById("sZhi").textContent = s.zhi_total ?? 0;
       document.getElementById("sXing").textContent = s.xing_total ?? 0;
 
+      const warnEl = document.getElementById("warn");
+      const warns = [];
+      if (data.warning) warns.push(data.warning);
+      if (data.fallback_from) {
+        warns.push(`已从逐组识别退回整页识别，四角数字可能不准。`);
+      }
+      if (Array.isArray(data.degraded) && data.degraded.length) {
+        warns.push(
+          `流程有 ${data.degraded.length} 处降级：` +
+            data.degraded
+              .map((d) => `${d.stage} — ${d.reason}（${d.action || "已跳过"}）`)
+              .join("；")
+        );
+      }
+      if (Array.isArray(data.failed_cells) && data.failed_cells.length) {
+        warns.push(`有 ${data.failed_cells.length} 组单组识别调用失败，请重试这几组。`);
+      }
+      if (Array.isArray(data.dropped_groups) && data.dropped_groups.length) {
+        warns.push(
+          `有 ${data.dropped_groups.length} 组定位到但没读出枚数（已排除在结果外）：` +
+            data.dropped_groups.map((d) => d.verdict || d.reason).join("；")
+        );
+      }
+      if (data.review_groups) {
+        warns.push(`有 ${data.review_groups} 组标了「需复核」：这些是机器判不准的地方（叠盖朝向、被遮枚数、两路读数不一致），请对照卡片上的放大图确认。`);
+      }
+      if (warns.length) {
+        warnEl.hidden = false;
+        warnEl.textContent = warns.join(" ");
+      } else {
+        warnEl.hidden = true;
+      }
+
+      const methodsEl = document.getElementById("methods");
+      const stamps = data.stamps || [];
+      const tally = new Map();
+      stamps.forEach((st) => {
+        const k = `${st.method_id}. ${st.method_name}`;
+        tally.set(k, (tally.get(k) || 0) + 1);
+      });
+      if (tally.size) {
+        methodsEl.hidden = false;
+        methodsEl.innerHTML = [...tally.entries()]
+          .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+          .map(([k, v]) => `<span class="chip">${escapeHtml(k)} <b>×${v}</b></span>`)
+          .join("");
+      } else {
+        methodsEl.hidden = true;
+      }
+
       if (data.preview_base64) {
         preview.innerHTML = `<img alt="识别结果" src="data:image/jpeg;base64,${data.preview_base64}" />`;
       } else if (data.result_image) {
         preview.innerHTML = `<img alt="识别结果" src="${data.result_image}" />`;
       }
 
-      const stamps = data.stamps || [];
+      const note = data.page_note ? String(data.page_note) : "";
       if (!stamps.length) {
-        list.innerHTML = `<div class="placeholder" style="opacity:.5">未检测到印章</div>`;
+        list.innerHTML = `<div class="placeholder" style="opacity:.75">未检测到印章${
+          note ? "：" + escapeHtml(note) : ""
+        }<br /><span style="opacity:.7">页面类型：${
+          data.page_type === "B" ? "盖法说明页" : data.page_type === "A" ? "记录页" : "未知"
+        } · 已调用 ${data.attempts || 1} 次</span></div>`;
         return;
       }
       list.innerHTML = stamps.map((st, i) => {
         const d = st.corner_digits || {};
-        const ori = st.orientation == null ? "—" : (st.orientation + "°");
-        const pos = st.row >= 0 ? `R${st.row}C${st.col}` : "未入格";
-        const fmt = (v) => (v === null || v === undefined ? "—" : v);
-        return `<article class="card">
-          <div class="title">${i + 1}. ${st.method_name}</div>
-          <div class="meta">编号 ${st.method_id} · ${pos} · 置信度 ${st.confidence}
- · 朝向 ${ori}</div>
-          <div class="meta">知章 ${st.zhi} · 行章 ${st.xing}</div>
-          <div class="digits">
-            <div>左上：<strong>${fmt(d["左上"])}</strong></div>
-            <div>右上：<strong>${fmt(d["右上"])}</strong></div>
-            <div>左下：<strong>${fmt(d["左下"])}</strong></div>
-            <div>右下：<strong>${fmt(d["右下"])}</strong></div>
+        const hasZhi = st.zhi > 0;
+        const ori = !hasZhi || st.orientation == null ? "—" : (st.orientation + "°");
+        const pos = st.row >= 0 ? `第 ${st.row + 1} 行` : "未入格";
+        const rawMismatch =
+          st.raw_counts && st.raw_counts !== `${st.zhi}/${st.xing}`
+            ? `<div class="meta" style="opacity:.6">模型原始计数 ${st.raw_counts}（已按盖法规则归一）</div>`
+            : "";
+        const thumb = st.crop_base64
+          ? `<img class="thumb" src="data:image/jpeg;base64,${st.crop_base64}" title="点击放大">`
+          : "";
+        const oriFixed =
+          st.rotation_fixed_by === "cv"
+            ? `<div class="meta" style="color:#2f6fed">朝向按章面图案校正（模型原判 ${
+                st.rotation_model === "rotated" ? "旋转180°" : "正向"
+              }）</div>`
+            : st.rotation_fixed_by === "tpl"
+            ? `<div class="meta" style="color:#2f6fed">按模板相关认出「本组内一枚正向、一枚旋转」，判为改进章</div>`
+            : "";
+        const countFixed = st.count_fixed_by
+          ? `<div class="meta" style="color:#2f6fed">枚数按独立计数修正（模型原读 ${
+              st.count_model || "—"
+            }）</div>`
+          : "";
+        const cell = (key) => {
+          const v = d[key];
+          return `<label>${key}<input type="text" inputmode="numeric" maxlength="1"
+            data-g="${i}" data-k="${key}" value="${v == null ? "" : v}"
+            placeholder="—" title="可直接改，改完即时生效"></label>`;
+        };
+        const zoomLine = st.zoom_bl
+          ? `<div class="zoomline"><img class="thumb" src="data:image/jpeg;base64,${st.zoom_bl}"
+               title="点击放大"><span>左下角放大图（用于核对最易经错的这一角）</span></div>`
+          : "";
+        const fixNotes = []
+          .concat((st.digit_fixed || []).map((f) => `${f.corner} ${f.from} → ${f.to}（按三窗放大图校正）`))
+          .concat((st.digit_filled_detail || []).map((f) => `${f.corner} 补读为 ${f.to}`))
+          .map((t) => `<div class="fixnote">${t}</div>`)
+          .join("");
+        const reviewNotes = (st.review || [])
+          .map((t) => `<div class="review">需复核：${t}</div>`)
+          .join("");
+        return `<article class="card" id="card${i}">
+          <div class="top">
+            ${thumb}
+            <div class="body">
+              <div class="title">${i + 1}. ${st.method_name}</div>
+              <div class="meta">盖法 ${st.method_id} · ${pos} · 朝向 ${ori}</div>
+              <div class="meta">知章 ${st.zhi} · 行章 ${st.xing}</div>
+              ${oriFixed}
+              ${countFixed}
+              ${rawMismatch}
+            </div>
           </div>
+          <div class="digits">${
+            hasZhi
+              ? ["左上", "右上", "左下", "右下"].map(cell).join("")
+              : `<div class="nodigits">行章（黄色圆章）没有四角数字，无需填写</div>`
+          }</div>
+          ${zoomLine}
+          ${fixNotes}
+          ${reviewNotes}
         </article>`;
       }).join("");
+      bindDigitEdit();
     }
 
-    function selectedEngine() {
-      const el = document.querySelector('input[name="engine"]:checked');
-      return el ? el.value : "deepseek";
+    // 四角数字可直接改：模型对 2/3 易混，人眼一眼就能看出来，改完即时生效
+    let editedCount = 0;
+    function bindDigitEdit() {
+      editedCount = 0;
+      list.querySelectorAll(".digits input").forEach((el) => {
+        el.addEventListener("input", () => {
+          el.value = el.value.replace(/[^1-9]/g, "").slice(0, 1);
+          const card = el.closest(".card");
+          const changed = el.value !== (el.dataset.orig ?? "");
+          el.classList.toggle("changed", changed);
+          card.classList.toggle("edited", !!card.querySelector(".digits input.changed"));
+          recountEdited();
+        });
+        el.dataset.orig = el.value;
+      });
     }
+    function recountEdited() {
+      editedCount = list.querySelectorAll(".digits input.changed").length;
+      const box = document.getElementById("editNote");
+      if (box) {
+        box.hidden = editedCount === 0;
+        box.textContent = `已手动修正 ${editedCount} 处数字`;
+      }
+    }
+
+    // 点小图放大，方便核对
+    document.addEventListener("click", (e) => {
+      const lb = document.getElementById("lightbox");
+      const t = e.target.closest(".thumb");
+      if (t) {
+        lb.querySelector("img").src = t.src;
+        lb.classList.add("on");
+      } else if (lb.classList.contains("on")) {
+        lb.classList.remove("on");
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") document.getElementById("lightbox").classList.remove("on");
+    });
 
     function setBusy(busy) {
       document.getElementById("btnPick").disabled = busy;
       document.getElementById("btnSample").disabled = busy;
-      document.querySelectorAll('input[name="engine"]').forEach((el) => { el.disabled = busy; });
     }
 
-    async function postRecognize(fd, engine) {
+    async function postRecognize(fd) {
       setBusy(true);
       const started = Date.now();
-      let tick = null;
-      if (engine === "deepseek") {
-        setStatus("DeepSeek 识别中（约 15–60 秒）…", "");
-        tick = setInterval(() => {
-          const sec = Math.round((Date.now() - started) / 1000);
-          setStatus(`DeepSeek 识别中…已等待 ${sec}s`, "");
-        }, 1000);
-      } else {
-        setStatus("本地识别中…", "");
-      }
+      setStatus("DeepSeek 识别中（约 15–60 秒）…", "");
+      const tick = setInterval(() => {
+        const sec = Math.round((Date.now() - started) / 1000);
+        setStatus(`DeepSeek 识别中…已等待 ${sec}s`, "");
+      }, 1000);
       try {
         const res = await fetch("/api/recognize", { method: "POST", body: fd });
         const data = await res.json();
@@ -323,38 +542,45 @@
           setStatus(data.error || "识别失败", "err");
           return;
         }
-        const eng = data.engine === "deepseek" ? "DeepSeek" : "本地";
         const sec = Math.round((Date.now() - started) / 1000);
-        setStatus(`完成（${eng}）：共 ${data.summary.groups} 组印章 · ${sec}s`, "ok");
+        const typeLabel =
+          data.mode === "cell"
+            ? "逐组裁切"
+            : data.page_type === "B"
+              ? "盖法说明页"
+              : data.page_type === "A"
+                ? "记录页"
+                : "未知页";
+        const noteTail = data.page_note ? ` · ${data.page_note}` : "";
+        const retryTail = data.attempts > 1 ? ` · 重试 ${data.attempts - 1} 次` : "";
+        setStatus(
+          `完成（DeepSeek·${typeLabel}）：共 ${data.summary.groups} 组印章 · ${sec}s${retryTail}${noteTail}`,
+          data.summary.groups ? "ok" : "err",
+        );
         renderResult(data);
       } finally {
-        if (tick) clearInterval(tick);
+        clearInterval(tick);
         setBusy(false);
       }
     }
 
     async function recognizeFile(file) {
-      const engine = selectedEngine();
       const fd = new FormData();
       fd.append("file", file);
-      fd.append("engine", engine);
-      await postRecognize(fd, engine);
+      await postRecognize(fd);
     }
 
     async function recognizeSample() {
-      const engine = selectedEngine();
       const fd = new FormData();
       fd.append("sample", "1");
-      fd.append("engine", engine);
-      await postRecognize(fd, engine);
+      await postRecognize(fd);
     }
 
     fetch("/api/status")
       .then((r) => r.json())
       .then((s) => {
         if (!s.deepseek_configured) {
-          document.getElementById("engLocal").checked = true;
-          setStatus("未配置 DEEPSEEK_API_KEY，已切到本地引擎。可在项目根目录 .env 写入密钥后重启。", "err");
+          setStatus("未配置 DEEPSEEK_API_KEY。请在项目根目录 .env 写入密钥后重启服务。", "err");
         }
       })
       .catch(() => {});

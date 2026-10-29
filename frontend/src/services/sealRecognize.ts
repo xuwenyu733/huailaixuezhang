@@ -24,12 +24,72 @@ export interface SealApiStamp {
   bbox?: number[]
 }
 
+export interface SealApiDegraded {
+  stage?: string
+  reason?: string
+  action?: string
+}
+
+export interface SealApiIntegrity {
+  cells_detected?: number
+  cells_cropped?: number
+  cells_recognized?: number
+  groups_returned?: number
+  groups_dropped?: number
+  cells_failed?: number
+  coverage?: number
+}
+
 export interface SealApiResponse {
   ok: boolean
   error?: string
   engine?: string
+  mode?: string
+  layout?: string
+  page_note?: string
   stamps?: SealApiStamp[]
   summary?: Record<string, unknown>
+  warning?: string | null
+  degraded?: SealApiDegraded[]
+  integrity?: SealApiIntegrity
+  failed_cells?: unknown[]
+  dropped_groups?: unknown[]
+  result_image?: string
+  preview_base64?: string
+}
+
+const STAGE_LABEL: Record<string, string> = {
+  upstream: '上游服务',
+  recognize: '整组识别',
+  crop: '裁切',
+  count: '枚数复核',
+  orient: '朝向判定',
+  digit_refine: '四角数字复核',
+}
+
+/** 把服务端的降级账本翻成人话，供采集页直接展示 */
+function buildNotices(data: SealApiResponse): string[] {
+  const notices: string[] = []
+  if (data.warning) notices.push(data.warning)
+
+  for (const d of data.degraded || []) {
+    const stage = STAGE_LABEL[String(d.stage || '')] || String(d.stage || '识别')
+    const reason = String(d.reason || '').trim()
+    const action = String(d.action || '').trim()
+    if (reason) notices.push(`${stage}降级：${reason}${action ? `（${action}）` : ''}`)
+  }
+
+  const dropped = data.dropped_groups?.length || 0
+  if (dropped) notices.push(`有 ${dropped} 组定位到但未识别出枚数，已跳过，请人工核对`)
+  const failed = data.failed_cells?.length || 0
+  if (failed) notices.push(`${failed} 组识别请求失败，结果可能不完整`)
+  if (data.layout === 'illustration') {
+    notices.push('本页按盖法说明页版式识别，四角数字已忽略')
+  }
+
+  const groups = data.stamps?.length || 0
+  if (groups > 1) notices.push(`本页共识别到 ${groups} 组盖章，已取置信度最高的一组`)
+  return notices
 }
 
 export function hasSealApiConfig(): boolean {
@@ -155,6 +215,30 @@ function postRecognizeUpload(filePath: string, url: string): Promise<SealApiResp
   })
 }
 
+/** 探测印章识别服务是否在线，供采集页显示状态 */
+export async function checkSealApiHealth(): Promise<{
+  ok: boolean
+  engine?: string
+  detail: string
+}> {
+  const base = String(SEAL_API.baseUrl || '').replace(/\/$/, '')
+  if (!base) return { ok: false, detail: '未配置识别服务地址' }
+  try {
+    const resp = await fetch(`${base}/api/health`)
+    const data: any = await resp.json()
+    const failed = (data?.checks || []).filter((c: any) => !c.ok)
+    return {
+      ok: !!data?.ok,
+      engine: data?.engine,
+      detail: data?.ok
+        ? `识别服务在线 · ${data?.engine || 'deepseek+cv'}`
+        : failed.map((c: any) => `${c.name} ${c.detail || ''}`).join('；') || '识别服务未就绪',
+    }
+  } catch (e: any) {
+    return { ok: false, detail: '识别服务未启动（backend: python app.py）' }
+  }
+}
+
 /** 上传本地图片到印章识别服务，取置信度最高的一枚 */
 export async function recognizeViaSealApi(
   filePath: string,
@@ -172,8 +256,22 @@ export async function recognizeViaSealApi(
   data = await postRecognizeUpload(filePath, url)
   // #endif
 
-  if (!data.ok) throw new Error(data.error || '印章识别失败')
+  if (!data.ok) {
+    const reason = data.error || '印章识别失败'
+    const detail = (data.degraded || [])
+      .map((d) => String(d.reason || '').trim())
+      .filter(Boolean)[0]
+    throw new Error(detail ? `${reason}：${detail}` : reason)
+  }
   const list = data.stamps || []
   if (!list.length) throw new Error('未识别到印章，请重拍或改用虚拟盖章')
-  return mapSealStampToOcr(pickBest(list), data.engine || 'seal-api')
+  const best = mapSealStampToOcr(pickBest(list), data.engine || 'seal-api')
+  return {
+    ...best,
+    notices: buildNotices(data),
+    groupCount: list.length,
+    layout: data.layout,
+    resultImage: data.result_image,
+    integrity: data.integrity,
+  }
 }

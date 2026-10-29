@@ -227,6 +227,33 @@ def method_by_id(method_id: int) -> StampMethod:
     raise KeyError(f"未知盖法 id={method_id}")
 
 
+def classify_method(zhi: int, xing: int, rotation: str = "normal") -> Tuple[int, str]:
+    """按「几枚知章 + 几枚行章 + 朝向」反推盖法编号。
+
+    1 正向 / 2 引导(180°) / 3 改进(正向+引导) / 4 知章二叠 / 5 知章三叠
+    6 行章 / 7 行章二叠 / 8 行章三叠 / 9-11 知行对章 n 叠
+    """
+    zhi = max(0, int(zhi or 0))
+    xing = max(0, int(xing or 0))
+    rotated = str(rotation).lower() in {"rotated", "180", "true"}
+
+    if zhi and xing:
+        pairs = min(zhi, xing)
+        mid = {1: 9, 2: 10, 3: 11}.get(pairs, 11)
+    elif xing and not zhi:
+        mid = {1: 6, 2: 7, 3: 8}.get(xing, 8)
+    elif zhi and not xing:
+        if zhi == 1:
+            mid = 2 if rotated else 1
+        elif zhi == 2:
+            mid = 3 if rotated else 4
+        else:
+            mid = 5
+    else:
+        return 0, "未识别"
+    return mid, method_by_id(mid).name
+
+
 def summarize_feasibility() -> str:
     return """
 可行性结论：可以实现。

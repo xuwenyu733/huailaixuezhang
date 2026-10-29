@@ -17,20 +17,65 @@ DEFAULT_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com
 
 SYSTEM_FALLBACK = """你是成长记录册盖章识别助手。只根据图片与规则输出 JSON，不要解释过程。
 
+第一步 先判断页面类型：
+- A「记录页」：页面有「盖章处」列/格，格子里是真实盖下的章。
+- B「盖法说明页」：表格列为「序号/盖法名称/盖法示意/量化标准/场景说明」，「盖法示意」列里是样章图。
+- 两种页面都必须识别，不允许因为“这是说明页/不是盖章处”而返回空数组。
+
 规则摘要：
 - 蓝方=知章（读内侧四角手写数字）；黄圆=行章（四角全 null）。
 - 盖法 1–11：正向/引导(180°)/改进/知章二叠/知章三叠/行章/行章二叠/行章三叠/知行对章/知行对章二叠/知行对章三叠。
 - 数字在方章内侧四角（斜线旁）；常只填三个角；看不清填 null。
 - 叠盖按整组外轮廓读一组四角数字。
-- 读序：盖章处列内，上→下，左→右。
+- 读序：记录页按盖章处列内上→下、左→右；说明页按表格行上→下，一行一组。
+- 说明页的 method_id 取「序号」列；盖法名称取「盖法名称」列。
 
 输出 schema：
-{"stamps":[{"row":0,"col":0,"method_id":1,"method_name":"正向章（知章）","zhi":1,"xing":0,"orientation_deg":0,"corner_digits":{"左上":1,"右上":3,"左下":2,"右下":null},"confidence":0.9}]}"""
+{"page_type":"A|B","page_note":"一句话说明页面类型与共几组","stamps":[{"row":0,"col":0,"method_id":1,"method_name":"正向章（知章）","zhi":1,"xing":0,"orientation_deg":0,"corner_digits":{"左上":1,"右上":3,"左下":2,"右下":null},"confidence":0.9}]}
+
+只有整页确实没有任何印章图案时，才允许 stamps 为空数组；此时仍必须给出 page_note 说明原因。"""
 
 USER_PROMPT = (
-    "请识别这张成长记录册「盖章处」图片。"
-    "直接输出合法 JSON（含 stamps 数组），不要 markdown，不要解释。"
+    "请识别这张成长记录册页面。"
+    "先判断是「记录页」还是「盖法说明页」，两种都必须识别。"
+    "直接输出合法 JSON（含 page_type、page_note、stamps 数组），不要 markdown，不要解释。"
 )
+
+RETRY_PROMPT = (
+    "上一次返回了空 stamps。请再逐行检查图片："
+    "「盖法示意」列或「盖章处」格里是否存在蓝色方章（知章）或黄色圆章（行章）图案？"
+    "只要存在就必须逐组输出，不要因为“这是说明页”而返回空数组。直接输出完整 JSON。"
+)
+
+# 鉴权/余额/权限类错误：再重试也没有意义，必须直接把原因报给人。
+# 这类错误以前会被「单组识别失败→返回 0 枚」吞掉，整页看起来像「没识别到印章」。
+FATAL_STATUS = {401, 402, 403}
+
+
+class UpstreamFatal(RuntimeError):
+    """上游不可用（无余额 / 密钥无效 / 无权限），调用方应直接失败而不是降级。"""
+
+    def __init__(self, message: str, status: Optional[int] = None):
+        super().__init__(message)
+        self.status = status
+
+
+def fatal_reason(exc: BaseException) -> Optional[str]:
+    """判断异常是否属于「重试无意义」的上游错误，返回可读原因；否则 None。"""
+    code = getattr(exc, "status_code", None)
+    if code is None:
+        code = getattr(getattr(exc, "response", None), "status_code", None)
+    try:
+        code = int(code) if code is not None else None
+    except (TypeError, ValueError):
+        code = None
+    text = str(exc)
+    if code in FATAL_STATUS:
+        return f"HTTP {code}: {text[:300]}"
+    low = text.lower()
+    if "insufficient balance" in low or "invalid_api_key" in low or "authentication" in low:
+        return text[:300]
+    return None
 
 
 def load_dotenv_if_present() -> None:
@@ -216,44 +261,57 @@ def recognize_with_deepseek(image_path: Path) -> Tuple[List[Dict[str, Any]], Dic
     client = OpenAI(api_key=api_key, base_url=DEFAULT_BASE_URL)
     model = DEFAULT_MODEL
 
+    base_messages = [
+        {"role": "system", "content": load_system_prompt()},
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": USER_PROMPT},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": data_url, "detail": "high"},
+                },
+            ],
+        },
+    ]
+
     # deepseek-flash 默认开启 thinking，长页会把 max_tokens 耗尽在推理里，content 为空
-    resp = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": load_system_prompt()},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": USER_PROMPT},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": data_url, "detail": "high"},
-                    },
-                ],
-            },
-        ],
-        temperature=0.1,
-        max_tokens=8192,
-        extra_body={"thinking": {"type": "disabled"}},
-    )
-
-    msg = resp.choices[0].message
-    content = (msg.content or "").strip()
-    if not content:
-        reasoning = getattr(msg, "reasoning_content", None) or ""
-        finish = resp.choices[0].finish_reason
-        raise RuntimeError(
-            f"模型返回为空（finish={finish}）。"
-            + ("推理占满了输出额度，已应关闭 thinking；请重试。" if finish == "length" else "")
-            + (f" reasoning 片段: {reasoning[:120]}…" if reasoning else "")
+    # 结果为空时再补一次追问（模型偶发把「说明页」判成无需识别），最多两次调用
+    stamps: List[Dict[str, Any]] = []
+    parsed: Dict[str, Any] = {}
+    resp = None
+    for attempt in range(2):
+        messages = base_messages
+        if attempt == 1:
+            messages = base_messages + [{"role": "user", "content": RETRY_PROMPT}]
+        resp = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=0,
+            max_tokens=8192,
+            extra_body={"thinking": {"type": "disabled"}},
         )
+        msg = resp.choices[0].message
+        content = (msg.content or "").strip()
+        if not content:
+            reasoning = getattr(msg, "reasoning_content", None) or ""
+            finish = resp.choices[0].finish_reason
+            raise RuntimeError(
+                f"模型返回为空（finish={finish}）。"
+                + ("推理占满了输出额度，已应关闭 thinking；请重试。" if finish == "length" else "")
+                + (f" reasoning 片段: {reasoning[:120]}…" if reasoning else "")
+            )
+        parsed = _extract_json(content)
+        stamps = normalize_stamps(parsed)
+        if stamps:
+            break
 
-    parsed = _extract_json(content)
-    stamps = normalize_stamps(parsed)
     meta = {
         "engine": "deepseek",
         "model": model,
+        "page_type": parsed.get("page_type"),
         "page_note": parsed.get("page_note"),
+        "attempts": attempt + 1,
         "usage": {
             "prompt_tokens": getattr(resp.usage, "prompt_tokens", None),
             "completion_tokens": getattr(resp.usage, "completion_tokens", None),

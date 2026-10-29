@@ -25,6 +25,16 @@ export interface OcrStampResult {
   cornerDigits?: Record<string, number | null>
   confidence?: number
   stampType?: 'know' | 'do' | 'combo'
+  /** 识别服务给出的提示（低分辨率 / 降级 / 丢弃组等） */
+  notices?: string[]
+  /** 本页识别到的盖章组数 */
+  groupCount?: number
+  /** cell=逐组裁切识别，page=整页识别 */
+  layout?: string
+  /** 服务端标注图地址（/output/xxx.jpg） */
+  resultImage?: string
+  /** 流程完整性账本 */
+  integrity?: Record<string, number | undefined>
   raw?: any
 }
 
@@ -240,23 +250,7 @@ export function readImageBase64(filePath: string): Promise<string> {
 export async function recognizeStampImage(filePath: string): Promise<OcrStampResult> {
   if (filePath.startsWith('mock-')) return mockRecognize(filePath)
 
-  // 1) DeepSeek 视觉（桌面印章识别同款提示词与 11 种盖法）
-  try {
-    const { hasDeepseekOcrConfig, recognizeViaDeepseek } = await import('./deepseekSeal')
-    const { DEEPSEEK_OCR } = await import('@/config/deepseek')
-    if (hasDeepseekOcrConfig()) {
-      try {
-        return await recognizeViaDeepseek(filePath)
-      } catch (e: any) {
-        if (!DEEPSEEK_OCR.allowMockFallback) throw e
-        console.warn('[ocr] deepseek failed, fallback', e?.message || e)
-      }
-    }
-  } catch (e: any) {
-    console.warn('[ocr] deepseek unavailable', e?.message || e)
-  }
-
-  // 2) 桌面 Flask 印章识别服务（可选）
+  // 1) 印章识别服务（后端 OpenCV 定位 + DeepSeek 逐组识别，密钥留在服务端）
   try {
     const { hasSealApiConfig, recognizeViaSealApi } = await import('./sealRecognize')
     const { SEAL_API } = await import('@/config/sealApi')
@@ -270,6 +264,22 @@ export async function recognizeStampImage(filePath: string): Promise<OcrStampRes
     }
   } catch (e: any) {
     console.warn('[ocr] seal-api unavailable', e?.message || e)
+  }
+
+  // 2) DeepSeek 视觉直连（未接服务时的兜底，需前端持有密钥）
+  try {
+    const { hasDeepseekOcrConfig, recognizeViaDeepseek } = await import('./deepseekSeal')
+    const { DEEPSEEK_OCR } = await import('@/config/deepseek')
+    if (hasDeepseekOcrConfig()) {
+      try {
+        return await recognizeViaDeepseek(filePath)
+      } catch (e: any) {
+        if (!DEEPSEEK_OCR.allowMockFallback) throw e
+        console.warn('[ocr] deepseek failed, fallback', e?.message || e)
+      }
+    }
+  } catch (e: any) {
+    console.warn('[ocr] deepseek unavailable', e?.message || e)
   }
 
   // 3) 腾讯云 SealOCR（通用印章，盖法映射较弱）

@@ -1,5 +1,6 @@
 import { addChild, getCurrentChild, listChildrenByClassCode } from './childRepo'
 import { listStampsByChild, listStampsByOwner, saveStamp } from './stampRepo'
+import { DIMENSIONS, dimNameOf } from '@/constants/dimensions'
 import type { StampRow } from '@/types/user'
 
 export type ReportMode = 'month' | 'term' | 'dim'
@@ -15,14 +16,10 @@ export interface ReportBundle {
   ranks: { av: string; name: string; zze: string; me: boolean }[]
 }
 
-const DIM_MAP: Record<string, string> = {
-  德育: '德',
-  智育: '智',
-  体育: '体',
-  美育: '美',
-  劳育: '劳',
-  品格: '格',
-}
+/**
+ * 旧版本按「德育/智育…」手填维度，现已改为按编码第 1 位归类，此映射不再使用。
+ * 保留注释是为了说明历史数据的口径差异：老记录若没有合法编码，不计入维度画像。
+ */
 
 function monthKey(iso: string): string {
   const d = new Date(iso)
@@ -128,8 +125,9 @@ export async function buildParentReport(
     else if (r.stamp_type === 'do') doAct += 1
     else know += 1
     if (r.source === 'physical') physical += 1
-    const key = DIM_MAP[r.primary_dim] || r.primary_dim?.slice(0, 1) || '智'
-    dimSum[key] = (dimSum[key] || 0) + v
+    // 维度不再看手填字段，一律按编码第 1 位归类；旧数据没有合法编码时不计维度
+    const dimName = dimNameOf(String(r.code_text || '').replace(/\D/g, '').charAt(0))
+    if (dimName) dimSum[dimName] = (dimSum[dimName] || 0) + v
   })
 
   const sortedKeys = Object.keys(monthSum).sort()
@@ -147,7 +145,7 @@ export async function buildParentReport(
   const doStrong = Math.round((doAct / totalActs) * 100)
   const balance = Math.max(0, 100 - knowStrong - doStrong)
 
-  const dimNames = ['德', '智', '体', '美', '劳', '格', '致', '诚', '正']
+  const dimNames = DIMENSIONS.map((d) => d.name)
   const maxDim = Math.max(1, ...Object.values(dimSum), 1)
   let dims = dimNames.map((name) => ({
     name,

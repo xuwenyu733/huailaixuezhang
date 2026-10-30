@@ -164,8 +164,26 @@ export function sealMethodById(id: number): SealMethodDef | undefined {
 
 export function formatSealValue(m: SealMethodDef): string {
   if (m.valueUnit === 'Y') return '引导章 · 不计当量'
-  if (m.valueUnit === 'G') return `+${m.valueNum} ZZE（改进章 2ZE）`
-  const unit =
-    m.valueUnit === 'ZE' ? '知章' : m.valueUnit === 'XE' ? '行章' : '对章'
-  return `+${m.valueNum} ZZE（${unit}）`
+  // 改进章归入知章单位（2ZE），其余按各自单位显示
+  const unit = m.valueUnit === 'G' ? 'ZE' : m.valueUnit
+  return `+${Math.round(m.valueNum / UNIT_BASE[unit])} ${unit}`
+}
+
+/** 各单位的 ZZE 基数：1ZE=10、1XE=100、1DE=500 */
+export const UNIT_BASE: Record<'ZE' | 'XE' | 'DE', number> = { ZE, XE, DE }
+
+/** 记录类型 → 当量单位：知行对章=DE、行章=XE、知章=ZE */
+export function unitOfStampType(t?: string): 'ZE' | 'XE' | 'DE' {
+  if (t === 'combo') return 'DE'
+  if (t === 'do') return 'XE'
+  return 'ZE'
+}
+
+/**
+ * 列表里的当量文案，统一成「+130 DE / +110 ZE / +110 XE」这一种写法。
+ * 不再输出“XX当量（XE）”这类中文注解，单位即说明。
+ */
+export function formatStampValue(valueNum: number, stampType?: string): string {
+  const unit = unitOfStampType(stampType)
+  return `+${Math.round((Number(valueNum) || 0) / UNIT_BASE[unit])} ${unit}`
 }

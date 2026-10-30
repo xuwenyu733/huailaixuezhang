@@ -8,15 +8,19 @@
       <text class="desc">
         {{
           goods.kind === 'incentive'
-            ? '激励商品：达成目标后可由家长登记领取，计入订单。'
-            : '周边商品：确认后写入「我的订单」。线下付款请再上传支付凭证。'
+            ? '激励商品：达成目标后到官网下单领取，官网负责发货与售后。'
+            : '周边商品：统一在官网销售，价格与库存以官网为准。'
         }}
       </text>
       <view class="code-box">
         <text class="lab">购买编号</text>
         <text class="code">{{ buyCode }}</text>
       </view>
-      <button class="btn" :loading="loading" @click="buy">确认购买并记入订单</button>
+      <button class="btn" @click="goOfficial">到官网购买</button>
+      <button class="btn ghost" :loading="loading" @click="buy">
+        仅在程序内登记意向（不付款）
+      </button>
+      <text class="foot">小程序不收款、不发货，登记只用于家长自己核对清单</text>
     </view>
   </view>
 </template>
@@ -24,7 +28,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { INCENTIVE_GOODS, SHOP_GOODS, type ShopGoods } from '@/constants/goods'
+import { INCENTIVE_GOODS, SHOP_GOODS, officialUrlOf, type ShopGoods } from '@/constants/goods'
+import { openOfficial } from '@/utils/official'
 import { requireLogin } from '@/services/auth'
 import { pushMessage } from '@/services/messageRepo'
 import { createOrder } from '@/services/orderRepo'
@@ -39,6 +44,11 @@ onLoad((q) => {
   if (found) goods.value = found
   buyCode.value = `HL${Date.now().toString().slice(-8)}`
 })
+
+/** 官网购买：小程序不收款，统一跳官网 */
+function goOfficial() {
+  openOfficial(officialUrlOf(goods.value))
+}
 
 async function buy() {
   const user = requireLogin()
@@ -105,4 +115,10 @@ async function buy() {
   height: 88rpx; line-height: 88rpx;
 }
 .btn::after { border: none; }
+.btn.ghost {
+  margin-top: 16rpx; background: #eff6ff; color: #2563eb;
+}
+.foot {
+  display: block; margin-top: 16rpx; font-size: 22rpx; color: #9ca3af; text-align: center;
+}
 </style>

@@ -80,6 +80,24 @@ DEEPSEEK_MODEL=deepseek-flash
 
 上游 401/402/403 直接返回 HTTP 402 并中止，不逐组重试、不退回整页 —— 避免给出「看起来正常但少一半」的结果。
 
+### `POST /api/ai/code-suggest`
+
+自然语言（或语音转写）→ 编码建议，供前端「虚拟盖章 · AI 识别编码」使用。
+提示词在 `prompts/ai_code_suggest.md`，走同一把 `DEEPSEEK_API_KEY`。
+
+```bash
+curl -s -X POST http://127.0.0.1:8765/api/ai/code-suggest \
+  -H "Content-Type: application/json" \
+  -d '{"text":"今天回家自己把作业写完，还检查了一遍","role":"parent"}'
+```
+
+返回：`code`（主线三位 `1-1-1`）、`level1/2/3`、`personal`（右下个性化位）、`digits[4]`、
+`method`（正向章/引导章/改进章/行章/知行对章）、`stamp_type`、`quote`、`advice`、`confidence`、`reason`。
+
+- 信息不足（如「孩子今天很高兴」）返回 `matched=false` 并说明缺什么，**不给编码**；
+- 一级维度只接受 1–7，越界一律按未匹配处理，避免脏编码落库；
+- 未配置密钥返回 400，上游 402 原样透传 402。
+
 ## 识别流程
 
 1. **颜色分割**（`src/cv_detect.py`）：`B-R` 判蓝、`G-B` 判黄，亮度自适应阈值分离两种章；

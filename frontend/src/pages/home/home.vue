@@ -88,6 +88,8 @@
 import { computed, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { DEMO_STAMPS, getDemoStampStats, isDemoId } from '@/constants/demoData'
+import { dimNameOf } from '@/constants/dimensions'
+import { formatStampValue } from '@/constants/sealMethods'
 import { refreshCurrentUser, requireLogin } from '@/services/auth'
 import { countUnreadMessages } from '@/services/messageRepo'
 import { listStampsByOwner } from '@/services/stampRepo'
@@ -133,13 +135,23 @@ function applyStampRows(
   levels[1].lv = `Lv.${lvOf(physical)}`
   levels[2].pct = Math.min(100, combo * 20)
   levels[2].lv = `Lv.${lvOf(combo)}`
-  records.value = rows.slice(0, 8).map((r) => ({
-    type: r.stamp_type === 'combo' ? 'combo' : r.source === 'physical' ? 'do' : 'know',
-    title: `${r.source === 'physical' ? '实体' : '虚拟'} · ${r.secondary_dim || r.stamp_type}`,
-    sub: `${r.subject || '-'} · ${r.child_name || ''} · 编码${r.code_text}`,
-    pts: r.value_text || `+${r.value_num}`,
-    color: r.stamp_type === 'combo' ? '#10b981' : r.source === 'physical' ? '#f59e0b' : '#2563eb',
-  }))
+  records.value = rows.slice(0, 8).map((r) => {
+    // 当量单位跟图标一致：知行对章 DE、实体/行章 XE、知章 ZE
+    const unitType =
+      r.stamp_type === 'combo'
+        ? 'combo'
+        : r.stamp_type === 'do' || r.source === 'physical'
+          ? 'do'
+          : 'know'
+    return {
+      type:
+        r.stamp_type === 'combo' ? 'combo' : r.source === 'physical' ? 'do' : 'know',
+      title: `${r.source === 'physical' ? '实体' : '虚拟'} · ${dimNameOf(String(r.code_text || '').charAt(0)) || r.stamp_type}`,
+      sub: `${r.subject || '-'} · ${r.child_name || ''} · 编码${r.code_text}`,
+      pts: formatStampValue(r.value_num, unitType),
+      color: r.stamp_type === 'combo' ? '#10b981' : r.source === 'physical' ? '#f59e0b' : '#2563eb',
+    }
+  })
 }
 
 onShow(async () => {

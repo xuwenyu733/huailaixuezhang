@@ -1,11 +1,15 @@
 <template>
   <view class="page">
-    <view class="goods" v-for="g in list" :key="g.name" @click="open(g.name)">
+    <view class="note">商品统一在官网销售。点击任意商品将跳转官网，小程序内不承接下单与支付。</view>
+    <view class="goods" v-for="g in list" :key="g.name" @click="open(g)">
       <view class="img" :style="{ background: g.bg }">{{ g.tag }}</view>
       <view class="meta">
         <text class="name">{{ g.name }}</text>
         <text class="sub">{{ g.sub }}</text>
-        <text class="price">¥{{ g.price }}</text>
+        <view class="row">
+          <text class="price">¥{{ g.price }}</text>
+          <text class="go">去官网 ›</text>
+        </view>
       </view>
     </view>
   </view>
@@ -14,7 +18,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { INCENTIVE_GOODS, SHOP_GOODS } from '@/constants/goods'
+import { INCENTIVE_GOODS, SHOP_GOODS, officialUrlOf, type ShopGoods } from '@/constants/goods'
+import { openOfficial } from '@/utils/official'
 
 const kind = ref('shop')
 const list = computed(() => (kind.value === 'incentive' ? INCENTIVE_GOODS : SHOP_GOODS))
@@ -26,8 +31,8 @@ onLoad((q) => {
   })
 })
 
-function open(name: string) {
-  uni.navigateTo({ url: `/pages/shop/shop?name=${encodeURIComponent(name)}` })
+function open(g: ShopGoods) {
+  openOfficial(officialUrlOf(g))
 }
 </script>
 
@@ -43,5 +48,11 @@ function open(name: string) {
 .meta { flex: 1; }
 .name { display: block; font-size: 28rpx; font-weight: 600; }
 .sub { display: block; margin-top: 8rpx; font-size: 22rpx; color: #9ca3af; }
-.price { display: block; margin-top: 12rpx; color: #ef4444; font-weight: 700; }
+.row { display: flex; align-items: center; justify-content: space-between; margin-top: 12rpx; }
+.price { color: #ef4444; font-weight: 700; }
+.go { font-size: 22rpx; color: #2563eb; }
+.note {
+  background: #eff6ff; color: #1d4ed8; font-size: 22rpx; line-height: 1.7;
+  padding: 18rpx 20rpx; border-radius: 12rpx; margin-bottom: 16rpx;
+}
 </style>

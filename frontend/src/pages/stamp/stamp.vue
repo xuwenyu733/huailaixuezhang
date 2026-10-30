@@ -48,17 +48,18 @@
 
     <!-- 印章编码预览 -->
     <view class="block">
-      <text class="block-title">印章编码设置</text>
+      <text class="block-title">印章编码</text>
       <view class="preview-wrap">
         <view class="big-stamp" :class="stampClass">
-          <view class="center" @click="cycleCenter">{{ centerText }}</view>
+          <view class="center" :class="{ locked: !isTeacher }" @click="onCenterTap">{{ centerText }}</view>
           <view class="corner tl" @click="openPicker('tl')">{{ codes.tl }}</view>
           <view class="corner tr" @click="openPicker('tr')">{{ codes.tr }}</view>
           <view class="corner bl" @click="openPicker('bl')">{{ codes.bl }}</view>
           <view class="corner br" @click="openPicker('br')">{{ codes.br }}</view>
         </view>
-        <text class="tip">点击中心切换学科；点击四角选择 0–9 编码</text>
-        <text class="tip soft">左上一级维度 · 右上二级 · 左下场景 · 右下校验</text>
+        <text class="tip">{{ centerTip }}</text>
+        <text class="tip soft">左上 一级维度(1–7) · 右上 二级指标 · 左下 三级行为 · 右下 个性化</text>
+        <text class="tip soft">始终 4 位编码；叠章只加枚数，不改编码</text>
       </view>
     </view>
 
@@ -79,10 +80,10 @@
       <text class="hint">正章=1ZE；引导章=1Y 不计分；改进章=1G+2ZE</text>
     </view>
 
-    <!-- 行章叠章说明 -->
+    <!-- 行章说明（可手动盖） -->
     <view class="block" v-if="stampType === 'do'">
-      <text class="block-title">行章说明</text>
-      <text class="hint">黄色圆章，基础 1XE；可与叠章叠加计分</text>
+      <text class="block-title">行章（手动可盖）</text>
+      <text class="hint">黄色圆章，1 枚基础 1XE；下方选叠数，按枚数累计，最高三叠</text>
     </view>
 
     <!-- 叠章 -->
@@ -99,32 +100,46 @@
           {{ item }}
         </view>
       </view>
-      <text class="hint">未选正向章时不可叠章；最高三叠</text>
+      <text class="hint">{{ stackHint }}</text>
     </view>
 
-    <!-- 维度 -->
+    <!-- AI 识别编码：对话 / 记录 / 语音 -->
     <view class="block">
-      <text class="block-title">选择评价维度</text>
-      <view class="tags">
-        <view
-          v-for="item in primaryDims"
-          :key="item"
-          class="tag"
-          :class="{ active: primaryDim === item }"
-          @click="selectPrimary(item)"
-        >
-          {{ item }}
-        </view>
+      <view class="row-between">
+        <text class="block-title">AI 识别编码</text>
+        <text class="soft">描述孩子做了什么，自动匹配编码</text>
       </view>
-      <view class="tags mt">
-        <view
-          v-for="item in secondaryDims"
-          :key="item"
-          class="tag"
-          :class="{ active: secondaryDim === item }"
-          @click="selectSecondary(item)"
-        >
-          {{ item }}
+      <textarea
+        v-model="aiText"
+        class="textarea"
+        placeholder="例：孩子今天回家后不用提醒，自己把作业写完还检查了一遍"
+        maxlength="300"
+      />
+      <view class="ai-actions">
+        <button class="mini-btn" :loading="aiBusy" @click="suggestByAi">识别编码</button>
+        <button class="mini-btn ghost" @click="startVoice">语音输入</button>
+        <text class="link" @click="toggleRecords">{{ showRecords ? '收起记录' : '从记录选' }}</text>
+      </view>
+      <view v-if="showRecords" class="rec-pick">
+        <text v-if="!records.length" class="soft">暂无记录可复用</text>
+        <text v-for="(r, i) in records" :key="i" class="rec-item" @click="useRecord(r)">
+          {{ r.title }} · {{ r.sub }}
+        </text>
+      </view>
+      <view v-if="aiResult" class="ai-result">
+        <text class="ai-code" v-if="aiResult.matched">
+          {{ aiResult.code }} · {{ aiResult.dim_name }} · {{ aiResult.method }}
+        </text>
+        <text class="ai-code warn" v-else>未匹配到编码</text>
+        <text class="ai-meta" v-if="aiResult.matched">
+          置信度 {{ Math.round((aiResult.confidence || 0) * 100) }}% · 个性化位 {{ aiResult.personal }}
+        </text>
+        <text v-if="aiResult.quote" class="ai-quote">原文：{{ aiResult.quote }}</text>
+        <text v-if="aiResult.advice" class="ai-advice">建议：{{ aiResult.advice }}</text>
+        <text v-if="aiResult.reason" class="ai-hint">{{ aiResult.reason }}</text>
+        <view class="ai-actions">
+          <button v-if="aiResult.matched" class="mini-btn" @click="applyAiResult">采用该编码</button>
+          <text class="link" @click="aiResult = null">清除</text>
         </view>
       </view>
     </view>
@@ -169,13 +184,13 @@
       <text class="picker-sub">{{ pickerTitle }}</text>
       <view class="num-grid">
         <view
-          v-for="num in 10"
-          :key="num - 1"
+          v-for="num in pickerNums"
+          :key="num"
           class="num"
-          :class="{ active: codes[currentCorner] === num - 1 }"
-          @click="selectNum(num - 1)"
+          :class="{ active: codes[currentCorner] === num }"
+          @click="selectNum(num)"
         >
-          {{ num - 1 }}
+          {{ num }}
         </view>
       </view>
     </view>
@@ -187,6 +202,7 @@ import { computed, reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { requireLogin } from '@/services/auth'
 import { getCurrentChild } from '@/services/childRepo'
+import { dimNameOf } from '@/constants/dimensions'
 import { bumpActiveGoals } from '@/services/goalRepo'
 import { pushMessage } from '@/services/messageRepo'
 import { listStampsByOwner, saveStamp } from '@/services/stampRepo'
@@ -202,8 +218,6 @@ const centerText = ref('语文')
 const subjects = ['语文', '数学', '英语', '科学', '德育', '综合']
 const knowKind = ref<KnowKind>('正向章')
 const stackKind = ref<StackKind>('无')
-const primaryDim = ref('智育')
-const secondaryDim = ref('课堂发言')
 const note = ref('')
 const pickerShow = ref(false)
 const currentCorner = ref<Corner>('tl')
@@ -211,6 +225,17 @@ const records = ref<{ title: string; sub: string }[]>([])
 const saving = ref(false)
 const ownerId = ref('')
 const child = ref<ChildRow | null>(null)
+const role = ref<'parent' | 'teacher' | 'family'>('parent')
+const aiText = ref('')
+const aiBusy = ref(false)
+const aiResult = ref<any>(null)
+const showRecords = ref(false)
+
+const isTeacher = computed(() => role.value === 'teacher')
+const centerTip = computed(() => {
+  if (isTeacher.value) return '点击中心切换学科'
+  return '家长端不选学科，编码即为定位'
+})
 
 const childAvatar = computed(
   () => child.value?.avatar_text || child.value?.name?.slice(0, 1) || '学',
@@ -235,21 +260,13 @@ const stampClass = computed(() => {
 })
 const knowKinds: KnowKind[] = ['正向章', '引导章', '改进章']
 const stackOptions: StackKind[] = ['无', '二叠章', '三叠章']
-const primaryDims = ['智育', '德育', '体育', '美育', '劳育', '品格']
-const secondaryDims = ['课堂发言', '作业完成', '测试达标', '志愿服务']
 
-const dimCodeMap: Record<string, number> = {
-  智育: 1,
-  德育: 2,
-  体育: 3,
-  美育: 4,
-  劳育: 5,
-  品格: 6,
-  课堂发言: 1,
-  作业完成: 2,
-  测试达标: 3,
-  志愿服务: 4,
-}
+const stackHint = computed(() => {
+  if (stampType.value === 'know' && knowKind.value !== '正向章') {
+    return `${knowKind.value}不可叠章；换回正向章才能叠加`
+  }
+  return '二叠 = 2 枚、三叠 = 3 枚，按枚数累计当量'
+})
 
 const canStack = computed(() => {
   if (stampType.value === 'combo' || stampType.value === 'do') return true
@@ -257,38 +274,45 @@ const canStack = computed(() => {
 })
 
 const valuePreview = computed(() => {
-  if (stampType.value === 'combo') {
-    const mul = stackKind.value === '三叠章' ? 3 : stackKind.value === '二叠章' ? 2 : 1
-    return `+${mul} 知行对章当量（DE）`
-  }
-  if (stampType.value === 'do') {
-    const mul = stackKind.value === '三叠章' ? 3 : stackKind.value === '二叠章' ? 2 : 1
-    return `+${mul} 行章当量（XE）`
-  }
-  if (knowKind.value === '引导章') return '+1 引导章（Y，不计当量）'
-  if (knowKind.value === '改进章') return '+2 知章当量（ZE，改进章）'
   const mul = stackKind.value === '三叠章' ? 3 : stackKind.value === '二叠章' ? 2 : 1
-  return `+${mul} 知章当量（ZE）`
+  // 统一成「+N 单位」：DE=知行对章、XE=行章、ZE=知章，不再写“XX当量”中文注解
+  if (stampType.value === 'combo') return `+${mul} DE`
+  if (stampType.value === 'do') return `+${mul} XE`
+  if (knowKind.value === '引导章') return '不计当量（引导章）'
+  if (knowKind.value === '改进章') return `+${2 * mul} ZE`
+  return `+${mul} ZE`
 })
 
 const pickerTitle = computed(() => {
-  const map = { tl: '左上角', tr: '右上角', bl: '左下角', br: '右下角' }
-  return `${map[currentCorner.value]}编码`
+  const map = {
+    tl: '左上 · 一级维度（1–7）',
+    tr: '右上 · 二级指标',
+    bl: '左下 · 三级行为',
+    br: '右下 · 个性化编码',
+  }
+  return map[currentCorner.value]
+})
+
+/** 一级维度只有 1–7，其余角位 0–9 */
+const pickerNums = computed(() => {
+  if (currentCorner.value === 'tl') return [1, 2, 3, 4, 5, 6, 7]
+  return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 })
 
 onLoad(async () => {
   const user = requireLogin()
   if (!user) return
   ownerId.value = user.id
+  role.value = (user.role as 'parent' | 'teacher' | 'family') || 'parent'
+  // 家长端不选学科，中心只作体系标识
+  if (role.value !== 'teacher') centerText.value = 'ZZE'
   try {
     if (String(user.id).startsWith('demo_')) {
       const { DEMO_STAMPS, getDemoCurrentChild } = await import('@/constants/demoData')
       child.value = getDemoCurrentChild()
       records.value = DEMO_STAMPS.slice(0, 10).map((r) => ({
-        title: `${r.source === 'physical' ? '实体' : '虚拟'} · ${r.value_text || r.stamp_type}`,
-        sub: `${r.primary_dim}/${r.secondary_dim} · 编码${r.code_text} · ${r.subject}${
-          r.child_name ? ' · ' + r.child_name : ''
-        }`,
+        title: `${r.source === 'physical' ? '实体' : '虚拟'} · ${dimNameOf(String(r.code_text || '').charAt(0)) || '未归类'}`,
+        sub: `${r.subject || '-'} · ${r.child_name || ''} · 编码${r.code_text}`,
       }))
       return
     }
@@ -304,7 +328,7 @@ async function reloadRecords() {
   const rows = await listStampsByOwner(ownerId.value, 10)
   records.value = rows.map((r) => ({
     title: `${r.source === 'physical' ? '实体' : '虚拟'} · ${r.value_text || r.stamp_type}`,
-    sub: `${r.primary_dim}/${r.secondary_dim} · 编码${r.code_text} · ${r.subject}${
+    sub: `${dimNameOf(String(r.code_text || '').charAt(0)) || '未归类'} · 编码${r.code_text} · ${r.subject}${
       r.child_name ? ' · ' + r.child_name : ''
     }`,
   }))
@@ -335,23 +359,103 @@ function selectKnowKind(kind: KnowKind) {
   if (kind !== '正向章') stackKind.value = '无'
 }
 
-function selectPrimary(dim: string) {
-  primaryDim.value = dim
-  if (dimCodeMap[dim] !== undefined) {
-    codeStore[stampType.value].tl = dimCodeMap[dim]
+/** 只有教师端保留中心选科；家长端不选科 */
+function onCenterTap() {
+  if (!isTeacher.value) {
+    uni.showToast({ title: '家长端不用选学科，编码即定位', icon: 'none' })
+    return
   }
-}
-
-function selectSecondary(dim: string) {
-  secondaryDim.value = dim
-  if (dimCodeMap[dim] !== undefined) {
-    codeStore[stampType.value].tr = dimCodeMap[dim]
-  }
-}
-
-function cycleCenter() {
   const idx = subjects.indexOf(centerText.value)
   centerText.value = subjects[(idx + 1) % subjects.length]
+}
+
+function toggleRecords() {
+  showRecords.value = !showRecords.value
+}
+
+/** 复用历史记录里的 4 位编码，不再调模型 */
+function useRecord(r: { title: string; sub: string }) {
+  const m = /编码\s*(\d)(\d)(\d)(\d)/.exec(r.sub)
+  if (!m) {
+    uni.showToast({ title: '该记录没有可用编码', icon: 'none' })
+    return
+  }
+  codeStore[stampType.value] = {
+    tl: Number(m[1]),
+    tr: Number(m[2]),
+    bl: Number(m[3]),
+    br: Number(m[4]),
+  }
+  showRecords.value = false
+  uni.showToast({ title: `已复用编码 ${m[1]}${m[2]}${m[3]}${m[4]}`, icon: 'none' })
+}
+
+async function suggestByAi() {
+  const text = aiText.value.trim()
+  if (text.length < 4) {
+    uni.showToast({ title: '先描述一下孩子做了什么', icon: 'none' })
+    return
+  }
+  aiBusy.value = true
+  try {
+    const { suggestCode } = await import('@/services/aiCode')
+    const r = await suggestCode(text, { role: role.value === 'teacher' ? 'teacher' : 'parent' })
+    aiResult.value = r
+    if (!r.matched) {
+      uni.showToast({ title: r.reason || '信息不足，补一句具体行为', icon: 'none' })
+    }
+  } catch (e: any) {
+    uni.showToast({ title: e.message || '识别失败', icon: 'none' })
+  } finally {
+    aiBusy.value = false
+  }
+}
+
+/** 把 AI 结果填进四角与章型，仍可手动改 */
+function applyAiResult() {
+  const r = aiResult.value
+  if (!r || !r.matched) return
+  // 先切章型，再写该章型的编码，否则会写到上一个章型的缓存里
+  stampType.value = r.stamp_type as StampType
+  if (r.stamp_type === 'know' && r.know_kind) knowKind.value = r.know_kind
+  if (r.stamp_type === 'know' && r.know_kind !== '正向章') stackKind.value = '无'
+  codeStore[stampType.value] = {
+    tl: r.level1,
+    tr: r.level2,
+    bl: r.level3,
+    br: r.personal,
+  }
+  aiText.value = ''
+  uni.showToast({ title: `已填入编码 ${r.code}`, icon: 'none' })
+}
+
+/** 语音输入：H5 用浏览器识别，不可用时提示通道待定 */
+function startVoice() {
+  const w = window as any
+  const Rec = w.SpeechRecognition || w.webkitSpeechRecognition
+  if (!Rec) {
+    uni.showModal({
+      title: '语音通道待接入',
+      content: '当前环境不支持浏览器语音识别。可以先手动输入，或在 docs/待确认清单.md 里选定语音通道。',
+      showCancel: false,
+    })
+    return
+  }
+  const rec = new Rec()
+  rec.lang = 'zh-CN'
+  rec.interimResults = false
+  rec.maxAlternatives = 1
+  rec.onresult = (e: any) => {
+    const text = e.results?.[0]?.[0]?.transcript || ''
+    if (text) aiText.value = text
+  }
+  rec.onerror = () => uni.showToast({ title: '语音识别失败，请手动输入', icon: 'none' })
+  try {
+    rec.start()
+    uni.showToast({ title: '请说话…', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '无法启动语音识别', icon: 'none' })
+  }
 }
 
 function openPicker(corner: Corner) {
@@ -401,9 +505,10 @@ async function confirmStamp() {
       stampType: stampType.value,
       knowKind: stampType.value === 'know' ? knowKind.value : '',
       stackKind: stackKind.value,
-      subject: centerText.value,
-      primaryDim: primaryDim.value,
-      secondaryDim: secondaryDim.value,
+      subject: isTeacher.value ? centerText.value : '',
+      // 评价维度不再手选，改由编码推导：第 1 位即一级维度
+      primaryDim: dimNameOf(c.tl),
+      secondaryDim: `${c.tl}-${c.tr}`,
       codeTl: c.tl,
       codeTr: c.tr,
       codeBl: c.bl,
@@ -818,5 +923,92 @@ async function confirmStamp() {
 .num.active {
   background: #2563eb;
   color: #fff;
+}
+
+/* AI 识别编码 */
+.center.locked {
+  background: rgba(107, 114, 128, 0.08);
+  color: #9ca3af;
+  font-size: 24rpx;
+}
+.ai-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+.mini-btn {
+  margin: 0;
+  padding: 0 24rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  font-size: 24rpx;
+  color: #fff;
+  background: #2563eb;
+  border-radius: 12rpx;
+}
+.mini-btn::after {
+  border: none;
+}
+.mini-btn.ghost {
+  color: #2563eb;
+  background: #eff6ff;
+}
+.link {
+  font-size: 24rpx;
+  color: #2563eb;
+  margin-left: auto;
+}
+.rec-pick {
+  margin-top: 12rpx;
+  max-height: 300rpx;
+  overflow-y: auto;
+  background: #f9fafb;
+  border-radius: 12rpx;
+  padding: 8rpx 16rpx;
+}
+.rec-item {
+  display: block;
+  padding: 14rpx 0;
+  font-size: 22rpx;
+  color: #374151;
+  border-bottom: 2rpx solid #eef2f7;
+}
+.rec-item:last-child {
+  border-bottom: none;
+}
+.ai-result {
+  margin-top: 16rpx;
+  padding: 20rpx;
+  background: #f0f9ff;
+  border-radius: 12rpx;
+}
+.ai-code {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #0369a1;
+}
+.ai-code.warn {
+  color: #b45309;
+  font-size: 26rpx;
+}
+.ai-meta {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #6b7280;
+}
+.ai-quote,
+.ai-advice,
+.ai-hint {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #374151;
+}
+.ai-hint {
+  color: #6b7280;
 }
 </style>

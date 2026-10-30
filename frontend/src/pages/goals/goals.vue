@@ -21,8 +21,23 @@
     <view class="modal" v-if="show">
       <text class="mt">制定激励目标</text>
       <input class="inp" v-model="form.title" placeholder="目标标题，如 本月课堂积极" />
-      <input class="inp" v-model="form.rewardName" placeholder="奖励商品" />
-      <input class="inp" v-model="form.rewardPrice" placeholder="参考价格（选填）" />
+      <text class="lb">奖励商品（从清单选）</text>
+      <view class="pick">
+        <text
+          v-for="g in incentiveOptions"
+          :key="g.name"
+          class="pick-item"
+          :class="{ active: form.rewardName === g.name }"
+          @click="pickReward(g)"
+        >
+          {{ g.name }} ¥{{ g.price }}
+        </text>
+        <text class="pick-item" :class="{ active: custom }" @click="custom = true">自定义</text>
+      </view>
+      <template v-if="custom">
+        <input class="inp" v-model="form.rewardName" placeholder="自定义奖励名称" />
+        <input class="inp" v-model="form.rewardPrice" placeholder="参考价格（选填）" />
+      </template>
       <input class="inp" v-model="form.target" type="number" placeholder="目标当量，如 30" />
       <button class="btn" :loading="loading" @click="submit">保存目标</button>
     </view>
@@ -33,6 +48,7 @@
 import { reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { DEMO_GOALS, getDemoCurrentChild, isDemoId } from '@/constants/demoData'
+import { INCENTIVE_GOODS, type ShopGoods } from '@/constants/goods'
 import { requireLogin } from '@/services/auth'
 import { getCurrentChild } from '@/services/childRepo'
 import { cancelGoal, createGoal, listGoalsByParent, type GoalRow } from '@/services/goalRepo'
@@ -44,6 +60,16 @@ const parentId = ref('')
 const childId = ref<string | number>(0)
 const childName = ref('')
 const form = reactive({ title: '', rewardName: '', rewardPrice: '', target: '' })
+
+/** 奖励商品从激励清单里选，避免每个家长手打出五花八门的名字 */
+const incentiveOptions = INCENTIVE_GOODS
+const custom = ref(false)
+
+function pickReward(g: ShopGoods) {
+  custom.value = false
+  form.rewardName = g.name
+  form.rewardPrice = g.price
+}
 
 onShow(async () => {
   const user = requireLogin()
@@ -136,4 +162,11 @@ async function onCancel(g: GoalRow) {
 }
 .btn { background: #2563eb; color: #fff; height: 88rpx; line-height: 88rpx; border-radius: 14rpx; }
 .btn::after { border: none; }
+.lb { display: block; font-size: 24rpx; color: #6b7280; margin-bottom: 12rpx; }
+.pick { display: flex; flex-wrap: wrap; gap: 12rpx; margin-bottom: 16rpx; }
+.pick-item {
+  font-size: 22rpx; color: #374151; background: #f3f4f6; border-radius: 999rpx;
+  padding: 10rpx 20rpx;
+}
+.pick-item.active { background: #2563eb; color: #fff; }
 </style>

@@ -45,6 +45,7 @@
         <text class="title">热门商品</text>
         <text class="link" @click="goCatalog('shop')">查看全部</text>
       </view>
+      <text class="tip mb">商品统一在官网销售，点击即跳转官网，小程序内不承接下单</text>
       <view class="grid">
         <view class="goods" v-for="g in goods" :key="g.name" @click="onGoods(g)">
           <view class="g-img" :style="{ background: g.bg }">{{ g.tag }}</view>
@@ -97,6 +98,8 @@ import {
   redeemPointsForMembership,
 } from '@/services/referral'
 import { useDemoStore } from '@/stores/demo'
+import { INCENTIVE_GOODS, SHOP_GOODS, officialUrlOf } from '@/constants/goods'
+import { openOfficial } from '@/utils/official'
 import { formatShortDate } from '@/utils/security'
 import type { SessionUser } from '@/types/user'
 
@@ -131,18 +134,9 @@ const vipSub = computed(() => {
   return '开通后可使用完整报告与无限次识别'
 })
 
-const goods = [
-  { tag: '印油', name: '专用光敏印油', sub: '蓝/黄/红 三色可选', price: '15.00', bg: '#dbeafe' },
-  { tag: '记录册', name: '成长记录册', sub: '一学期装 · 含编码表', price: '38.00', bg: '#fef3c7' },
-  { tag: '印章', name: '教师专用印章', sub: '带编号 · 光敏材质', price: '58.00', bg: '#d1fae5' },
-  { tag: '贴片', name: '智能识别贴片', sub: 'NFC近场通信', price: '2.50', bg: '#ede9fe' },
-]
-const incentives = [
-  { tag: '笔盒', name: '多功能塑料铅笔盒', sub: '蓝/黄/红 三色可选', price: '15.00', bg: '#e0f2fe' },
-  { tag: '书', name: '《三体》', sub: '第一章-第三章可选', price: '38.00起', bg: '#fce7f3' },
-  { tag: '玩偶', name: '某知名IP玩偶', sub: '20cm高度，柔软细致', price: '58.00', bg: '#ffedd5' },
-  { tag: '笔', name: '百乐0.5mm圆珠笔', sub: '蓝/黑/红三色可选', price: '5.00', bg: '#ecfccb' },
-]
+// 商品统一取 constants/goods.ts，官网链接也只在那里维护一份
+const goods = SHOP_GOODS
+const incentives = INCENTIVE_GOODS
 
 onShow(async () => {
   if (!requireLogin()) return
@@ -206,8 +200,8 @@ function onRedeem() {
   })
 }
 
-function onGoods(g: { name: string }) {
-  uni.navigateTo({ url: `/pages/shop/shop?name=${encodeURIComponent(g.name)}` })
+function onGoods(g: { name: string; url?: string }) {
+  openOfficial(officialUrlOf(g))
 }
 function goCatalog(kind: string) {
   uni.navigateTo({ url: `/pages/catalog/catalog?kind=${kind}` })

@@ -3,6 +3,7 @@
  */
 import { DEEPSEEK_OCR } from '@/config/deepseek'
 import { TENCENT_OCR } from '@/config/ocr'
+import { formatStampValue } from '@/constants/sealMethods'
 
 export interface OcrStampResult {
   mode: 'tencent' | 'mock' | 'seal-api' | 'deepseek'
@@ -168,7 +169,9 @@ function mapTencentToBiz(resp: any): OcrStampResult {
 
   const stampHint = otherTexts.find((t) => /^T\d+/i.test(String(t))) || ''
   const shape = String(resp?.SealShape ?? '')
-  const valueNum = shape === '2' ? 10 : shape === '0' ? 8 : 10
+  // 圆章=行章（1XE）、方章=知章（1ZE），单位决定当量基数
+  const isRound = shape === '0'
+  const valueNum = isRound ? 100 : 10
 
   return {
     mode: 'tencent',
@@ -179,8 +182,9 @@ function mapTencentToBiz(resp: any): OcrStampResult {
     primaryDim,
     secondaryDim,
     codeText,
-    valueText: `+${valueNum} ZZE`,
+    valueText: formatStampValue(valueNum, isRound ? 'do' : 'know'),
     valueNum,
+    stampType: isRound ? 'do' : 'know',
     teacherStampNo: stampHint || 'T0203',
     raw: resp,
   }
@@ -204,8 +208,9 @@ function mockRecognize(seed?: string): OcrStampResult {
     primaryDim,
     secondaryDim,
     codeText,
-    valueText: `+${valueNum} ZZE`,
+    valueText: formatStampValue(valueNum, 'know'),
     valueNum,
+    stampType: 'know',
     teacherStampNo: 'T0203',
   }
 }

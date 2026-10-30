@@ -36,13 +36,14 @@
       <view class="result-head">
         <view class="stamp-square" />
         <view>
-          <text class="rt">知章 · {{ result.secondaryDim }}</text>
-          <text class="rs">一级维度：{{ result.primaryDim }} · 二级：{{ result.secondaryDim }}</text>
+          <text class="rt">{{ result.methodName || '知章' }} · {{ dimName || '未识别维度' }}</text>
+          <text class="rs">编码 {{ codeLine }} · 个性化 {{ codePersonal }}</text>
         </view>
       </view>
       <view class="kv" v-if="!editing">
         <text>中心溯源区：{{ result.subject }}</text>
-        <text>周边编码：{{ result.codeText }}</text>
+        <text>主线编码（维度-指标-行为）：{{ codeLine }}</text>
+        <text>个性化编码（右下）：{{ codePersonal }}</text>
         <text>场景因子α：1.0</text>
         <text v-if="result.methodName">盖法：{{ result.methodName }}</text>
         <text v-if="result.methodName">知章×{{ result.zhiCount || 0 }} · 行章×{{ result.xingCount || 0 }}</text>
@@ -53,8 +54,7 @@
       </view>
       <view class="edit" v-else>
         <input class="inp" v-model="result.subject" placeholder="学科" />
-        <input class="inp" v-model="result.primaryDim" placeholder="一级维度" />
-        <input class="inp" v-model="result.secondaryDim" placeholder="二级维度" />
+        <input class="inp" v-model="result.codeText" placeholder="4 位编码，如 1120" />
         <input class="inp" v-model="result.valueText" placeholder="当量文案" />
         <input class="inp" v-model="result.note" placeholder="备注" />
       </view>
@@ -91,6 +91,7 @@ import { SEAL_API } from '@/config/sealApi'
 import { hasTencentOcrConfig, recognizeStampImage } from '@/services/ocr'
 import { checkSealApiHealth, hasSealApiConfig } from '@/services/sealRecognize'
 import { saveStamp } from '@/services/stampRepo'
+import { dimNameOf, splitCode } from '@/constants/dimensions'
 import type { ChildRow } from '@/types/user'
 
 const showResult = ref(false)
@@ -132,8 +133,8 @@ const result = reactive({
   primaryDim: '智育',
   secondaryDim: '课堂参与',
   codeText: '1234',
-  valueText: '+10 ZZE',
-  valueNum: 10,
+  valueText: '+1 XE',
+  valueNum: 100,
   note: '',
   teacherName: '李老师',
   teacherStampNo: 'T0203',
@@ -147,6 +148,12 @@ const result = reactive({
   stampType: 'know' as 'know' | 'do' | 'combo',
   notices: [] as string[],
 })
+
+/** 编码固定 4 位：前 3 位主线（维度-指标-行为），第 4 位个性化 */
+const codeParts = computed(() => splitCode(result.codeText))
+const codeLine = computed(() => codeParts.value.line)
+const codePersonal = computed(() => codeParts.value.personal)
+const dimName = computed(() => dimNameOf(codeParts.value.tl))
 
 const childAvatar = computed(
   () => child.value?.avatar_text || child.value?.name?.slice(0, 1) || '学',
@@ -304,8 +311,9 @@ async function onConfirm() {
       stackKind:
         (result.zhiCount || 0) + (result.xingCount || 0) > 1 ? '叠章' : '无',
       subject: result.subject,
-      primaryDim: result.primaryDim,
-      secondaryDim: result.secondaryDim,
+      // 维度由编码推导，不再手填
+      primaryDim: dimNameOf(code[0]),
+      secondaryDim: `${Number(code[0])}-${Number(code[1])}`,
       codeTl: Number(code[0] || 0),
       codeTr: Number(code[1] || 0),
       codeBl: Number(code[2] || 0),

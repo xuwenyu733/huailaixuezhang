@@ -29,6 +29,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from cell_ocr import recognize_crops  # noqa: E402
 import orient as orient_cv  # noqa: E402
+from ai_code import suggest_code  # noqa: E402
 from cv_detect import crop_group, detect_groups, to_original  # noqa: E402
 from deepseek_ocr import UpstreamFatal, load_dotenv_if_present, recognize_with_deepseek  # noqa: E402
 from seal_methods import classify_method  # noqa: E402
@@ -141,6 +142,42 @@ def api_health():
         "mode": MODE,
         "checks": checks,
     })
+
+
+@app.post("/api/ai/code-suggest")
+def api_ai_code_suggest():
+    """自然语言（或语音转写）→ 编码建议。
+
+    body: {text, grade?, scene?, role?}
+    返回：{ok, matched, code, digits[4], dim_name, method, stamp_type, know_kind, quote, advice, ...}
+    """
+    load_dotenv_if_present()
+    if not os.environ.get("DEEPSEEK_API_KEY", "").strip():
+        return jsonify(
+            {"ok": False, "error": "未配置 DEEPSEEK_API_KEY。请在 backend/.env 写入密钥后重启服务。"}
+        ), 400
+
+    body = request.get_json(silent=True) or {}
+    text = str(body.get("text") or request.form.get("text") or "").strip()
+    if not text:
+        return jsonify({"ok": False, "error": "请描述孩子做了什么"}), 400
+    if len(text) > 600:
+        text = text[:600]
+
+    try:
+        result = suggest_code(
+            text,
+            grade=str(body.get("grade") or "").strip()[:40],
+            scene=str(body.get("scene") or "").strip()[:80],
+            role=str(body.get("role") or "parent").strip(),
+        )
+        return jsonify({"ok": True, **result})
+    except UpstreamFatal as e:
+        app.logger.error("AI 编码建议上游不可用：%s", e)
+        return jsonify({"ok": False, "error": f"识别服务额度不足或密钥失效：{e}"}), 402
+    except Exception as e:  # noqa: BLE001
+        app.logger.error("AI 编码建议失败：%s\n%s", e, traceback.format_exc())
+        return jsonify({"ok": False, "error": str(e)}), 502
 
 
 @app.post("/api/recognize")
